@@ -252,6 +252,7 @@ select:focus { border-color: var(--green); }
       <button class="vbtn" id="vbtn-list" onclick="setPipelineView('list')">Lijst</button>
     </div>
     <button class="btn" onclick="loadAll()">↺</button>
+    <button class="btn" onclick="openImport()">↑ Importeren</button>
     <button class="btn btn-primary" onclick="openNewDossier()">+ Nieuw dossier</button>
   </div>
   <div class="stats" id="stats"></div>
@@ -525,6 +526,48 @@ select:focus { border-color: var(--green); }
   </div>
 </div>
 
+
+
+<!-- Import modal -->
+<div id="modal-import" style="display:none" class="modal-bg" onclick="bgClose(event,'modal-import')">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <div class="modal-head"><h2>Importeren</h2><button class="btn btn-icon btn-sm" onclick="closeModal('modal-import')">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <button class="btn" id="imp-tab-excel" onclick="setImportTab('excel')" style="flex:1;justify-content:center">📊 Excel — PPS/PS lijst</button>
+        <button class="btn" id="imp-tab-pdf" onclick="setImportTab('pdf')" style="flex:1;justify-content:center">📄 PDF — Purchase order</button>
+      </div>
+
+      <!-- Excel tab -->
+      <div id="imp-excel">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Upload je PPS_PS_Action_overview.xlsx — de AI leest alle orders en sample statussen uit en koppelt ze aan de juiste dossiers op basis van artikelcode.</p>
+        <div class="field">
+          <label>Excel bestand</label>
+          <input type="file" id="imp-excel-file" accept=".xlsx,.xls" style="font-size:13px;padding:6px 0" />
+        </div>
+        <button class="btn btn-primary" onclick="importExcel()" style="margin-top:8px" id="imp-excel-btn">Verwerken</button>
+      </div>
+
+      <!-- PDF tab -->
+      <div id="imp-pdf" style="display:none">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Upload een purchase order PDF — de AI herkent artikelcode, ordernummer en leverdatum en maakt automatisch een sample regel aan in het juiste dossier.</p>
+        <div class="field">
+          <label>PDF bestand</label>
+          <input type="file" id="imp-pdf-file" accept=".pdf" style="font-size:13px;padding:6px 0" />
+        </div>
+        <button class="btn btn-primary" onclick="importPdf()" style="margin-top:8px" id="imp-pdf-btn">Verwerken</button>
+      </div>
+
+      <!-- Results -->
+      <div id="imp-results" style="margin-top:16px"></div>
+    </div>
+    <div class="modal-foot">
+      <div style="margin-left:auto">
+        <button class="btn" onclick="closeModal('modal-import')">Sluiten</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Sample modal -->
 <div id="modal-sample" style="display:none" class="modal-bg" onclick="bgClose(event,'modal-sample')">
@@ -1218,6 +1261,191 @@ async function deleteClient() {
 }
 
 
+
+// ===== IMPORT =====
+function openImport() {
+  document.getElementById('imp-results').innerHTML = '';
+  document.getElementById('imp-excel-file').value = '';
+  document.getElementById('imp-pdf-file').value = '';
+  setImportTab('excel');
+  document.getElementById('modal-import').style.display = 'flex';
+}
+
+function setImportTab(tab) {
+  document.getElementById('imp-excel').style.display = tab==='excel'?'block':'none';
+  document.getElementById('imp-pdf').style.display = tab==='pdf'?'block':'none';
+  document.getElementById('imp-tab-excel').className = 'btn'+(tab==='excel'?' btn-primary':'');
+  document.getElementById('imp-tab-pdf').className = 'btn'+(tab==='pdf'?' btn-primary':'');
+}
+
+function showImportResults(html) {
+  document.getElementById('imp-results').innerHTML = html;
+}
+
+async function importExcel() {
+  const file = document.getElementById('imp-excel-file').files[0];
+  if(!file){showImportResults('<div class="err">Selecteer eerst een bestand</div>');return;}
+  const btn = document.getElementById('imp-excel-btn');
+  btn.textContent = 'Bezig...'; btn.disabled = true;
+  showImportResults('<div class="ai-loading"><div class="spinner"></div> Excel lezen en analyseren... even geduld</div>');
+  try {
+    // Read file as base64
+    const base64 = await new Promise((res,rej)=>{
+      const r = new FileReader();
+      r.onload = ()=>res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+    // Use SheetJS via CDN to parse Excel client-side first
+    const text = await readExcelAsText(base64);
+
+    // Build products map (shi_code -> dossier_id)
+    const prodMap = {};
+    dossiers.forEach(d => { if(d.shi_code) prodMap[d.shi_code] = {dossier_id: d.id, client: clients.find(c=>c.id===d.client_id)?.name}; });
+
+    const resp = await fetch('/api/import', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({type:'excel', content: text, products: prodMap})
+    });
+    const data = await resp.json();
+    if(!resp.ok) throw new Error(data.error);
+
+    const rows = Array.isArray(data.result) ? data.result : [data.result];
+    await processImportRows(rows);
+  } catch(e) {
+    showImportResults(`<div class="err">Fout: ${e.message}</div>`);
+  }
+  btn.textContent = 'Verwerken'; btn.disabled = false;
+}
+
+async function readExcelAsText(base64) {
+  // Load SheetJS dynamically
+  if(!window.XLSX) {
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+  const wb = window.XLSX.read(bytes, {type:'array', cellDates:true});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  return window.XLSX.utils.sheet_to_csv(ws);
+}
+
+async function importPdf() {
+  const file = document.getElementById('imp-pdf-file').files[0];
+  if(!file){showImportResults('<div class="err">Selecteer eerst een bestand</div>');return;}
+  const btn = document.getElementById('imp-pdf-btn');
+  btn.textContent = 'Bezig...'; btn.disabled = true;
+  showImportResults('<div class="ai-loading"><div class="spinner"></div> PDF analyseren...</div>');
+  try {
+    const text = await readPdfAsText(file);
+    const dosMap = {};
+    dossiers.forEach(d => { if(d.shi_code) dosMap[d.shi_code] = d.id; });
+
+    const resp = await fetch('/api/import', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({type:'pdf', content: text, dossiers: dosMap})
+    });
+    const data = await resp.json();
+    if(!resp.ok) throw new Error(data.error);
+
+    const result = data.result;
+    // Show PDF result and allow creating sample
+    showImportResults(`
+      <div style="background:var(--green-p);border:1px solid var(--green-l);border-radius:var(--r);padding:14px 16px;font-size:13px">
+        <div style="font-weight:500;margin-bottom:8px">✓ PO herkend</div>
+        <div><strong>Artikel:</strong> ${result.shi_code||'—'} — ${result.product_name||'—'}</div>
+        <div><strong>Order:</strong> ${result.order_number||'—'}</div>
+        <div><strong>Leverancier:</strong> ${result.supplier||'—'}</div>
+        <div><strong>Leverdatum:</strong> ${result.delivery_date||'—'}</div>
+        <div><strong>Volume:</strong> ${result.volume?parseInt(result.volume).toLocaleString()+' st':'—'}</div>
+        ${result.dossier_id?'<div style="margin-top:6px;color:var(--green-d)">✓ Gekoppeld aan bestaand dossier</div>':'<div style="margin-top:6px;color:var(--amber)">⚠ Geen dossier gevonden voor '+result.shi_code+' — maak eerst een dossier aan</div>'}
+        ${result.dossier_id?`<button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="createSampleFromPdf(${escJ(result)})">+ Sample aanmaken voor deze order</button>`:''}
+      </div>`);
+  } catch(e) {
+    showImportResults(`<div class="err">Fout: ${e.message}</div>`);
+  }
+  btn.textContent = 'Verwerken'; btn.disabled = false;
+}
+
+async function readPdfAsText(file) {
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = async (e) => {
+      try {
+        const arr = new Uint8Array(e.target.result);
+        // Extract text from PDF bytes (simple approach)
+        const decoder = new TextDecoder('latin1');
+        const raw = decoder.decode(arr);
+        // Extract readable text
+        const text = raw.replace(/[^ -~
+]/g,' ').replace(/\s+/g,' ').substring(0,4000);
+        res(text);
+      } catch(err){rej(err);}
+    };
+    r.onerror = rej;
+    r.readAsArrayBuffer(file);
+  });
+}
+
+async function processImportRows(rows) {
+  let created=0, skipped=0, noMatch=[];
+  for(const row of rows) {
+    if(!row.order_number) { skipped++; continue; }
+    if(!row.dossier_id) { noMatch.push(row); continue; }
+    // Check if sample already exists
+    const exists = samples.find(s=>s.dossier_id===row.dossier_id && s.order_number===row.order_number);
+    if(exists) { skipped++; continue; }
+    try {
+      await db('POST','samples','',{
+        dossier_id: row.dossier_id,
+        order_number: row.order_number,
+        pps_sent_date: row.pps_sent_date||null,
+        pps_approved_date: row.pps_approved_date||null,
+        pps_status: row.pps_status||'Openstaand',
+        ps_sent_date: row.ps_sent_date||null,
+        ps_approved_date: row.ps_approved_date||null,
+        ps_status: row.ps_status||'Openstaand',
+        notes: row.notes||null
+      });
+      created++;
+    } catch(e) { skipped++; }
+  }
+  samples = await db('GET','samples','?order=created_at.desc');
+  render();
+  let html = `<div style="background:var(--green-p);border:1px solid var(--green-l);border-radius:var(--r);padding:14px 16px;font-size:13px">
+    <div style="font-weight:500;margin-bottom:6px">✓ Import voltooid</div>
+    <div>${created} orders geïmporteerd</div>
+    <div>${skipped} overgeslagen (duplicaat of leeg)</div>
+    ${noMatch.length>0?`<div style="margin-top:8px;color:var(--amber)">⚠ ${noMatch.length} orders zonder matching dossier:</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">${noMatch.map(r=>r.shi_code+' · '+r.order_number).join('<br>')}</div>`:''}
+  </div>`;
+  showImportResults(html);
+}
+
+async function createSampleFromPdf(result) {
+  try {
+    await db('POST','samples','',{
+      dossier_id: result.dossier_id,
+      order_number: result.order_number,
+      pps_status: 'Openstaand',
+      ps_status: 'Openstaand',
+      notes: result.notes||null
+    });
+    samples = await db('GET','samples','?order=created_at.desc');
+    render();
+    showImportResults('<div style="background:var(--green-p);border:1px solid var(--green-l);border-radius:var(--r);padding:12px 14px;font-size:13px">✓ Sample aangemaakt — open het dossier om datums in te vullen</div>');
+  } catch(e){showImportResults(`<div class="err">Fout: ${e.message}</div>`);}
+}
+
 // ===== SAMPLES =====
 function renderSamplesTable(dosId) {
   const dosSamples = samples.filter(s=>s.dossier_id===dosId);
@@ -1321,7 +1549,7 @@ function showSetup() {
   </div>`;
 }
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['modal-product','modal-dossier','modal-quote','modal-sample','modal-client'].forEach(closeModal);}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['modal-product','modal-dossier','modal-quote','modal-sample','modal-client','modal-import'].forEach(closeModal);}});
 
 loadAll();
 </script>
