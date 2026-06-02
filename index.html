@@ -342,6 +342,15 @@ select:focus { border-color: var(--green); }
         <div class="field"><label>Volume (stuks)</label><input id="md-vol" type="number" placeholder="bijv. 200000" /></div>
         <div class="field"><label>Target prijs (USD FOB)</label><input id="md-target" type="number" step="0.01" placeholder="0.00" /></div>
       </div>
+      <div class="field-row">
+        <div class="field"><label>SHI artikelcode</label><input id="md-shi-code" placeholder="bijv. 75.023.76" /></div>
+        <div class="field"><label>Leverdatum</label><input id="md-delivery-date" type="date" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Ordernummer(s)</label><input id="md-order-nr" placeholder="bijv. 4500303927, 4500303928" /></div>
+        <div class="field"><label>PLA nummer (optioneel)</label><input id="md-pla" placeholder="bijv. A260006788" /></div>
+      </div>
+      <div class="field"><label>Sub-artikelen / EAN codes (optioneel)</label><textarea id="md-subarticles" placeholder="bijv. 75.023.77 BLACK · 75.023.78 GREY · 75.023.79 DARK BLUE" style="min-height:50px"></textarea></div>
       <div class="field">
         <label>Vereiste certificeringen</label>
         <div class="cert-row">
@@ -373,8 +382,20 @@ select:focus { border-color: var(--green); }
             <div class="field"><label>Leverancier voor mail</label>
               <select id="mail-supplier">
                 <option value="">— selecteer —</option>
-                <option>Comp (Jane Song)</option><option>Alecter (Benny Lau)</option><option>Kingsun (Lydia)</option>
-                <option>Marvo (Katherine)</option><option>Zhounghenghua (Lara)</option>
+                <optgroup label="Comp (36xxx)">
+                <option>36133 · Changzhou XBY International trade</option>
+                <option>35869 · Changzhou Virtue International Trade</option>
+                <option>35868 · Changzhou Compro International Trade</option>
+                <option>36054 · Changzhou Yurun International Trade</option>
+                <option>36162 · Changzhou Runjize International Trade</option>
+                <option>36134 · Changzhou XQY International Trade</option>
+                <option>36163 · Changzhou Yuhong International Trade</option>
+                </optgroup>
+                <optgroup label="SGL leveranciers">
+                <option>35704 · SGL / Shenzhen Marvo Technology</option>
+                <option>35703 · SGL / Kingsun Enterprises Development</option>
+                <option>35702 · SGL / Shenzhen Zhonghenghua Technology</option>
+                </optgroup>
               </select>
             </div>
             <div class="field"><label>Type mail</label>
@@ -423,7 +444,21 @@ select:focus { border-color: var(--green); }
         <div class="field"><label>Leverancier *</label>
           <select id="mq-supplier">
             <option value="">— selecteer —</option>
-            <option>Comp</option><option>Alecter</option><option>Kingsun</option><option>Marvo</option><option>Zhounghenghua</option><option>Overig</option>
+            <optgroup label="Comp (36xxx)">
+            <option>36133 · Changzhou XBY International trade</option>
+            <option>35869 · Changzhou Virtue International Trade</option>
+            <option>35868 · Changzhou Compro International Trade</option>
+            <option>36054 · Changzhou Yurun International Trade</option>
+            <option>36162 · Changzhou Runjize International Trade</option>
+            <option>36134 · Changzhou XQY International Trade</option>
+            <option>36163 · Changzhou Yuhong International Trade</option>
+            </optgroup>
+            <optgroup label="SGL leveranciers">
+            <option>35704 · SGL / Shenzhen Marvo Technology</option>
+            <option>35703 · SGL / Kingsun Enterprises Development</option>
+            <option>35702 · SGL / Shenzhen Zhonghenghua Technology</option>
+            </optgroup>
+            <option>Overig</option>
           </select>
         </div>
         <div class="field"><label>Contactpersoon</label><input id="mq-contact" placeholder="bijv. Benny Lau" /></div>
@@ -795,7 +830,8 @@ function openNewDossier() {
   document.getElementById('md-del').style.display='none';
   document.getElementById('quotes-section').style.display='none';
   populateDossierSelects();
-  ['md-vol','md-target','md-notes'].forEach(i=>document.getElementById(i).value='');
+  ['md-vol','md-target','md-notes','md-shi-code','md-order-nr','md-pla','md-subarticles'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('md-delivery-date').value='';
   document.getElementById('md-stage').value='Oriëntatie';
   document.getElementById('md-prio').value='Normaal';
   ['cert-grs','cert-cnas','cert-ce','cert-rohs','cert-qi2','cert-tuv'].forEach(i=>document.getElementById(i).checked=false);
@@ -826,6 +862,11 @@ function openEditDossier(d) {
   document.getElementById('cert-qi2').checked=!!(d.extra_certs&&d.extra_certs.includes('Qi2'));
   document.getElementById('cert-tuv').checked=!!(d.extra_certs&&d.extra_certs.includes('TÜV'));
   document.getElementById('md-notes').value=d.notes||'';
+  document.getElementById('md-shi-code').value=d.shi_code||'';
+  document.getElementById('md-delivery-date').value=d.delivery_date||'';
+  document.getElementById('md-order-nr').value=d.order_numbers||'';
+  document.getElementById('md-pla').value=d.pla_number||'';
+  document.getElementById('md-subarticles').value=d.sub_articles||'';
   document.getElementById('md-err').textContent='';
   document.getElementById('mail-output').innerHTML='';
   document.getElementById('mail-copy-btn').style.display='none';
@@ -845,7 +886,7 @@ async function saveDossier() {
   if(document.getElementById('cert-rohs').checked) extraCerts.push('RoHS');
   if(document.getElementById('cert-qi2').checked) extraCerts.push('Qi2');
   if(document.getElementById('cert-tuv').checked) extraCerts.push('TÜV');
-  const payload={product_id,client_id,stage:document.getElementById('md-stage').value,priority:document.getElementById('md-prio').value,volume:parseInt(document.getElementById('md-vol').value)||null,target_usd:parseFloat(document.getElementById('md-target').value)||null,requires_grs:document.getElementById('cert-grs').checked,requires_cnas:document.getElementById('cert-cnas').checked,extra_certs:extraCerts.join(',')||null,notes:document.getElementById('md-notes').value.trim()||null,updated_at:new Date().toISOString()};
+  const payload={product_id,client_id,stage:document.getElementById('md-stage').value,priority:document.getElementById('md-prio').value,volume:parseInt(document.getElementById('md-vol').value)||null,target_usd:parseFloat(document.getElementById('md-target').value)||null,requires_grs:document.getElementById('cert-grs').checked,requires_cnas:document.getElementById('cert-cnas').checked,extra_certs:extraCerts.join(',')||null,notes:document.getElementById('md-notes').value.trim()||null,shi_code:document.getElementById('md-shi-code').value.trim()||null,delivery_date:document.getElementById('md-delivery-date').value||null,order_numbers:document.getElementById('md-order-nr').value.trim()||null,pla_number:document.getElementById('md-pla').value.trim()||null,sub_articles:document.getElementById('md-subarticles').value.trim()||null,updated_at:new Date().toISOString()};
   try {
     if(editDosId) await db('PATCH','dossiers','?id=eq.'+editDosId,payload);
     else await db('POST','dossiers','',payload);
