@@ -750,27 +750,21 @@ async function scrapeUrl() {
   if(!url){document.getElementById('scrape-status').textContent='Voer eerst een URL in';return;}
   document.getElementById('scrape-btn').textContent='Bezig...';
   document.getElementById('scrape-btn').disabled=true;
-  document.getElementById('scrape-status').textContent='AI analyseert de URL...';
+  document.getElementById('scrape-status').textContent='Pagina ophalen en analyseren...';
   try {
-    const res = await fetch(AI, {
+    const res = await fetch('/api/scrape', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:`Analyseer deze product URL en geef ALLEEN een JSON object terug (geen markdown, geen uitleg) met deze velden: name (productnaam, kort en specifiek), category (kies uit: Audio, Kabels & accessoires, Powerbanks & laders, Solar, Gaming, Trending / TikTok, Overig), specs (compacte opsomming van specs in het Nederlands, max 3 regels). URL: ${url}`}]
-      })
+      body:JSON.stringify({url})
     });
     const data = await res.json();
-    const text = data.content?.[0]?.text||'';
-    const clean = text.replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(clean);
-    if(parsed.name) document.getElementById('mp-name').value=parsed.name;
-    if(parsed.category) document.getElementById('mp-cat').value=parsed.category;
-    if(parsed.specs) document.getElementById('mp-specs').value=parsed.specs;
+    if(!res.ok) throw new Error(data.error||'Onbekende fout');
+    if(data.name) document.getElementById('mp-name').value=data.name;
+    if(data.category) document.getElementById('mp-cat').value=data.category;
+    if(data.specs) document.getElementById('mp-specs').value=data.specs;
     document.getElementById('scrape-status').textContent='✓ Gegevens ingevuld — controleer en pas aan';
   } catch(e) {
-    document.getElementById('scrape-status').textContent='Kon URL niet analyseren — vul handmatig in';
+    document.getElementById('scrape-status').textContent='Kon URL niet analyseren: '+e.message+' — vul handmatig in';
   }
   document.getElementById('scrape-btn').textContent='AI ophalen';
   document.getElementById('scrape-btn').disabled=false;
