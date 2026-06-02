@@ -376,6 +376,22 @@ select:focus { border-color: var(--green); }
           </tr></thead>
           <tbody id="quotes-tbody"></tbody>
         </table>
+        <div style="margin-top:16px">
+          <div class="section-head">
+            <h3>PPS / PS Sample tracking</h3>
+            <button class="btn btn-sm" onclick="openAddSample()">+ Order toevoegen</button>
+          </div>
+          <table class="quotes-table" id="samples-table">
+            <thead><tr>
+              <th>Order nr</th>
+              <th>PPS verstuurd</th><th>PPS ACC</th><th>PPS status</th>
+              <th>PS verstuurd</th><th>PS ACC</th><th>PS status</th>
+              <th>Notitie</th><th></th>
+            </tr></thead>
+            <tbody id="samples-tbody"></tbody>
+          </table>
+        </div>
+
         <div style="margin-top:12px">
           <div class="section-head"><h3>Mail genereren</h3></div>
           <div class="field-row" style="margin-bottom:8px">
@@ -509,6 +525,44 @@ select:focus { border-color: var(--green); }
   </div>
 </div>
 
+
+<!-- Sample modal -->
+<div id="modal-sample" style="display:none" class="modal-bg" onclick="bgClose(event,'modal-sample')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><h2 id="ms-title">Sample order toevoegen</h2><button class="btn btn-icon btn-sm" onclick="closeModal('modal-sample')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Ordernummer *</label><input id="ms-order" placeholder="bijv. 4500303927" /></div>
+      <div class="field-row">
+        <div class="field"><label>PPS verstuurd</label><input id="ms-pps-sent" type="date" /></div>
+        <div class="field"><label>PPS akkoord datum</label><input id="ms-pps-acc" type="date" /></div>
+      </div>
+      <div class="field"><label>PPS status</label>
+        <select id="ms-pps-status">
+          <option>Openstaand</option><option>Verstuurd</option><option>Akkoord</option><option>Afgewezen</option><option>NVT</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>PS verstuurd</label><input id="ms-ps-sent" type="date" /></div>
+        <div class="field"><label>PS akkoord datum</label><input id="ms-ps-acc" type="date" /></div>
+      </div>
+      <div class="field"><label>PS status</label>
+        <select id="ms-ps-status">
+          <option>Openstaand</option><option>Verstuurd</option><option>Akkoord</option><option>Afgewezen</option><option>NVT</option>
+        </select>
+      </div>
+      <div class="field"><label>Notitie</label><textarea id="ms-notes" placeholder="bijv. nieuwe kleuren, GRS, opmerkingen..." style="min-height:50px"></textarea></div>
+      <div id="ms-err" class="err"></div>
+    </div>
+    <div class="modal-foot">
+      <button id="ms-del" class="btn btn-danger btn-sm" style="display:none" onclick="deleteSample()">Verwijderen</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn" onclick="closeModal('modal-sample')">Annuleren</button>
+        <button class="btn btn-primary" onclick="saveSample()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPA = 'https://nxtigysjwlushrlgftxg.supabase.co';
 const KEY  = 'sb_publishable_weVk4uRdM1rXgOD1JCToVQ_BDvKjFj_';
@@ -516,8 +570,8 @@ const AI   = 'https://api.anthropic.com/v1/messages';
 const STAGES = ['Oriëntatie','RFQ verstuurd','Sample','Onderhandeling','Goedgekeurd','On hold','Afgewezen'];
 
 // State
-let clients=[], products=[], dossiers=[], quotes=[], logs=[];
-let editProdId=null, editDosId=null, editQuoteId=null, editClientId=null;
+let clients=[], products=[], dossiers=[], quotes=[], logs=[], samples=[];
+let editProdId=null, editDosId=null, editQuoteId=null, editClientId=null, editSampleId=null;
 let currentDossierId=null;
 let pipelineView='kanban';
 let currentTab='pipeline';
@@ -546,11 +600,12 @@ function setStatus(s, msg) {
 async function loadAll() {
   setStatus('loading','laden...');
   try {
-    [clients, products, dossiers, quotes] = await Promise.all([
+    [clients, products, dossiers, quotes, samples] = await Promise.all([
       db('GET','clients','?order=name'),
       db('GET','products','?order=created_at.desc'),
       db('GET','dossiers','?order=created_at.desc'),
       db('GET','quotes','?order=created_at.desc'),
+      db('GET','samples','?order=created_at.desc'),
     ]);
     setStatus('ok',`verbonden · ${dossiers.length} dossiers`);
     populateClientFilter();
@@ -648,7 +703,8 @@ function renderKanban() {
           ${d.volume?`<span class="tag tag-gray">${parseInt(d.volume).toLocaleString()} st</span>`:''}
           ${certs}
         </div>
-        ${dQuotes.length>0?`<div class="card-quotes">📋 ${dQuotes.length} quote${dQuotes.length>1?'s':''}</div>`:''}`;
+        ${dQuotes.length>0?`<div class="card-quotes">📋 ${dQuotes.length} quote${dQuotes.length>1?'s':''}</div>`:''}
+        ${(()=>{const ds=samples.filter(s=>s.dossier_id===d.id);const pending=ds.filter(s=>s.pps_status!=='Akkoord'&&s.pps_status!=='NVT'||s.ps_status!=='Akkoord'&&s.ps_status!=='NVT');return ds.length>0?`<div class="card-quotes">${pending.length>0?'⚠️':'✓'} Samples: ${ds.length-pending.length}/${ds.length} OK</div>`:''})()}`;
       col.appendChild(card);
     });
     kanban.appendChild(col);
@@ -874,6 +930,7 @@ function openEditDossier(d) {
   renderQuotesTable(d.id);
   renderActivityLog(d.id);
   setTimeout(renderExtraDossierChecks, 100);
+  renderSamplesTable(d.id);
   document.getElementById('modal-dossier').style.display='flex';
 }
 async function saveDossier() {
@@ -1160,6 +1217,101 @@ async function deleteClient() {
   catch(e){document.getElementById('mc-err').textContent=e.message;}
 }
 
+
+// ===== SAMPLES =====
+function renderSamplesTable(dosId) {
+  const dosSamples = samples.filter(s=>s.dossier_id===dosId);
+  const tbody = document.getElementById('samples-tbody');
+  if(!tbody) return;
+  if(!dosSamples.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--faint);padding:14px">Nog geen orders — klik + Order toevoegen</td></tr>';return;}
+  const statusBadge = (s) => {
+    if(s==='Akkoord') return '<span class="tag tag-green">✓ Akkoord</span>';
+    if(s==='Verstuurd') return '<span class="tag tag-amber">Verstuurd</span>';
+    if(s==='Afgewezen') return '<span class="tag tag-red">Afgewezen</span>';
+    if(s==='NVT') return '<span class="tag tag-gray">NVT</span>';
+    return '<span class="tag tag-gray">Openstaand</span>';
+  };
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('nl-NL',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
+  tbody.innerHTML = dosSamples.map(s=>`<tr onclick="openEditSample(${escJ(s)})" style="cursor:pointer">
+    <td style="font-weight:500;font-family:var(--mono)">${s.order_number}</td>
+    <td>${fmtDate(s.pps_sent_date)}</td>
+    <td>${fmtDate(s.pps_approved_date)}</td>
+    <td>${statusBadge(s.pps_status)}</td>
+    <td>${fmtDate(s.ps_sent_date)}</td>
+    <td>${fmtDate(s.ps_approved_date)}</td>
+    <td>${statusBadge(s.ps_status)}</td>
+    <td style="color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.notes||'—'}</td>
+    <td></td>
+  </tr>`).join('');
+}
+
+function openAddSample() {
+  editSampleId = null;
+  document.getElementById('ms-title').textContent = 'Sample order toevoegen';
+  document.getElementById('ms-del').style.display = 'none';
+  document.getElementById('ms-order').value = '';
+  ['ms-pps-sent','ms-pps-acc','ms-ps-sent','ms-ps-acc'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('ms-pps-status').value = 'Openstaand';
+  document.getElementById('ms-ps-status').value = 'Openstaand';
+  document.getElementById('ms-notes').value = '';
+  document.getElementById('ms-err').textContent = '';
+  document.getElementById('modal-sample').style.display = 'flex';
+  setTimeout(()=>document.getElementById('ms-order').focus(),50);
+}
+
+function openEditSample(s) {
+  editSampleId = s.id;
+  document.getElementById('ms-title').textContent = 'Sample bewerken';
+  document.getElementById('ms-del').style.display = 'inline-flex';
+  document.getElementById('ms-order').value = s.order_number||'';
+  document.getElementById('ms-pps-sent').value = s.pps_sent_date||'';
+  document.getElementById('ms-pps-acc').value = s.pps_approved_date||'';
+  document.getElementById('ms-pps-status').value = s.pps_status||'Openstaand';
+  document.getElementById('ms-ps-sent').value = s.ps_sent_date||'';
+  document.getElementById('ms-ps-acc').value = s.ps_approved_date||'';
+  document.getElementById('ms-ps-status').value = s.ps_status||'Openstaand';
+  document.getElementById('ms-notes').value = s.notes||'';
+  document.getElementById('ms-err').textContent = '';
+  document.getElementById('modal-sample').style.display = 'flex';
+}
+
+async function saveSample() {
+  const order = document.getElementById('ms-order').value.trim();
+  if(!order){document.getElementById('ms-err').textContent='Ordernummer is verplicht';return;}
+  if(!currentDossierId){document.getElementById('ms-err').textContent='Geen dossier actief';return;}
+  const payload = {
+    dossier_id: currentDossierId,
+    order_number: order,
+    pps_sent_date: document.getElementById('ms-pps-sent').value||null,
+    pps_approved_date: document.getElementById('ms-pps-acc').value||null,
+    pps_status: document.getElementById('ms-pps-status').value,
+    ps_sent_date: document.getElementById('ms-ps-sent').value||null,
+    ps_approved_date: document.getElementById('ms-ps-acc').value||null,
+    ps_status: document.getElementById('ms-ps-status').value,
+    notes: document.getElementById('ms-notes').value.trim()||null,
+    updated_at: new Date().toISOString()
+  };
+  try {
+    if(editSampleId) await db('PATCH','samples','?id=eq.'+editSampleId,payload);
+    else await db('POST','samples','',payload);
+    closeModal('modal-sample');
+    samples = await db('GET','samples','?order=created_at.desc');
+    renderSamplesTable(currentDossierId);
+    render();
+  } catch(e){document.getElementById('ms-err').textContent=e.message;}
+}
+
+async function deleteSample() {
+  if(!editSampleId||!confirm('Sample verwijderen?')) return;
+  try {
+    await db('DELETE','samples','?id=eq.'+editSampleId);
+    closeModal('modal-sample');
+    samples = await db('GET','samples','?order=created_at.desc');
+    renderSamplesTable(currentDossierId);
+    render();
+  } catch(e){document.getElementById('ms-err').textContent=e.message;}
+}
+
 // ===== SETUP MSG =====
 function showSetup() {
   document.getElementById('pipeline-content').innerHTML=`<div style="margin:24px;background:var(--amber-bg);border:1px solid #f0d070;border-radius:var(--r-lg);padding:20px 24px">
@@ -1169,7 +1321,7 @@ function showSetup() {
   </div>`;
 }
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['modal-product','modal-dossier','modal-quote','modal-client'].forEach(closeModal);}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['modal-product','modal-dossier','modal-quote','modal-sample','modal-client'].forEach(closeModal);}});
 
 loadAll();
 </script>
