@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHI — Sourcing Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+  :root {
+    --shi-green: #779D91;
+    --shi-green-dark: #4f7a6e;
+    --shi-green-light: #c8ddd8;
+    --shi-green-pale: #eef4f2;
+    --bg: #f7f8f6;
+    --surface: #ffffff;
+    --surface2: #f2f4f2;
+    --border: #e2e8e5;
+    --border-strong: #c8d4d0;
+    --text: #1a2320;
+    --text-muted: #6b7d78;
+    --text-faint: #a0b0ab;
+    --font: 'DM Sans', system-ui, sans-serif;
+    --mono: 'DM Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  /* Layout */
+  .app { display: grid; grid-template-rows: auto auto 1fr; min-height: 100vh; }
+
+  /* Header */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--shi-green);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #fff; letter-spacing: -0.5px;
+  }
+  .logo-text { font-size: 14px; font-weight: 500; color: var(--text); }
+  .logo-sub { font-size: 12px; color: var(--text-muted); margin-top: -1px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .header-user { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--shi-green); color: #fff; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+  /* Toolbar */
+  .toolbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 0 0 220px; }
+  .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-faint); font-size: 13px; }
+  .search-wrap input { width: 100%; padding: 7px 10px 7px 30px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; outline: none; }
+  .search-wrap input:focus { border-color: var(--shi-green); background: var(--surface); }
+  select {
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; outline: none; cursor: pointer;
+  }
+  select:focus { border-color: var(--shi-green); }
+  .toolbar-spacer { flex: 1; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; font-weight: 400; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .btn:hover { background: var(--surface2); border-color: var(--border-strong); }
+  .btn-primary { background: var(--shi-green); border-color: var(--shi-green); color: #fff; }
+  .btn-primary:hover { background: var(--shi-green-dark); border-color: var(--shi-green-dark); }
+  .btn-danger { background: #fff0f0; border-color: #ffc5c5; color: #c0392b; }
+  .btn-danger:hover { background: #ffe0e0; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-icon { padding: 7px 9px; }
+
+  /* Stats bar */
+  .stats { display: flex; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+  .stat { flex: 1; background: var(--surface); padding: 14px 20px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 600; color: var(--text); font-family: var(--mono); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .stat-accent { color: var(--shi-green); }
+
+  /* Kanban */
+  .kanban-wrap { padding: 20px 24px; overflow-x: auto; }
+  .kanban { display: flex; gap: 14px; min-width: max-content; align-items: flex-start; }
+  .col { width: 240px; background: var(--surface2); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--border); }
+  .col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
+  .col-name { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .col-count { font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; color: var(--text-muted); font-family: var(--mono); }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px; margin-bottom: 8px;
+    cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
+    position: relative;
+  }
+  .card:hover { box-shadow: var(--shadow-md); border-color: var(--shi-green-light); }
+  .card-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+  .card-supplier { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+  .card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag { font-size: 11px; padding: 2px 7px; border-radius: 5px; font-family: var(--mono); }
+  .tag-green { background: var(--shi-green-pale); color: var(--shi-green-dark); }
+  .tag-amber { background: #fef9ec; color: #92600a; }
+  .tag-red { background: #fff0f0; color: #c0392b; }
+  .tag-blue { background: #eef4ff; color: #2563eb; }
+  .tag-gray { background: var(--surface2); color: var(--text-muted); }
+  .card-accent { position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; }
+  .accent-hoog { background: #e74c3c; }
+  .accent-normaal { background: var(--shi-green); }
+  .accent-laag { background: var(--border-strong); }
+
+  /* Empty col */
+  .col-empty { text-align: center; padding: 20px 0; color: var(--text-faint); font-size: 12px; }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(15,20,18,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-md); }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h2 { font-size: 16px; font-weight: 500; }
+  .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; outline: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--shi-green); background: var(--surface); }
+  .field textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .error-msg { font-size: 12px; color: #c0392b; }
+
+  /* Setup message */
+  .setup-msg { margin: 24px; background: #fffbec; border: 1px solid #f0d070; border-radius: var(--radius-lg); padding: 20px 24px; }
+  .setup-msg h3 { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #92600a; }
+  .setup-msg p { font-size: 13px; color: #6b4f10; margin-bottom: 12px; }
+  .setup-msg code { display: block; background: #1a2320; color: #c8ddd8; padding: 14px 16px; border-radius: var(--radius); font-family: var(--mono); font-size: 12px; white-space: pre; overflow-x: auto; line-height: 1.6; margin-bottom: 12px; }
+
+  /* DB status pill */
+  .db-pill { font-size: 11px; font-family: var(--mono); padding: 3px 8px; border-radius: 20px; border: 1px solid; display: inline-flex; align-items: center; gap: 5px; }
+  .db-pill.ok { background: #eef7f4; color: var(--shi-green-dark); border-color: var(--shi-green-light); }
+  .db-pill.err { background: #fff0f0; color: #c0392b; border-color: #ffc5c5; }
+  .db-pill.loading { background: var(--surface2); color: var(--text-muted); border-color: var(--border); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* View toggle */
+  .view-toggle { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2px; }
+  .view-btn { padding: 4px 8px; border-radius: 7px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; }
+  .view-btn.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+  /* List view */
+  .list-wrap { padding: 0 24px 24px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
+  th { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; padding: 10px 16px; text-align: left; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--shi-green-pale); cursor: pointer; }
+
+  @media (max-width: 600px) {
+    header { padding: 0 16px; }
+    .toolbar { padding: 10px 16px; }
+    .kanban-wrap { padding: 16px; }
+    .stat { padding: 10px 14px; }
+    .stat-val { font-size: 18px; }
+    .field-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">SHI</div>
+    <div>
+      <div class="logo-text">Sourcing Pipeline</div>
+      <div class="logo-sub">Multimedia — Michelle & Marco</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="db-status" class="db-pill loading"><span class="dot"></span> verbinden...</span>
+    <div class="header-user">
+      <div class="avatar">MR</div>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <i class="fa fa-search"></i>
+    <input type="text" id="search" placeholder="Zoeken..." oninput="render()" />
+  </div>
+  <select id="filter-supplier" onchange="render()">
+    <option value="">Alle leveranciers</option>
+    <option>Comp</option><option>Alecter</option><option>Kingsun</option><option>Marvo</option><option>Zhounghenghua</option>
+  </select>
+  <select id="filter-prio" onchange="render()">
+    <option value="">Alle prioriteit</option>
+    <option>Hoog</option><option>Normaal</option><option>Laag</option>
+  </select>
+  <div class="toolbar-spacer"></div>
+  <div class="view-toggle">
+    <button class="view-btn active" id="btn-kanban" onclick="setView('kanban')"><i class="fa fa-columns"></i></button>
+    <button class="view-btn" id="btn-list" onclick="setView('list')"><i class="fa fa-list"></i></button>
+  </div>
+  <button class="btn" onclick="loadData()"><i class="fa fa-rotate-right"></i></button>
+  <button class="btn btn-primary" onclick="openAdd()"><i class="fa fa-plus"></i> Nieuw item</button>
+</div>
+
+<div>
+  <div class="stats" id="stats"></div>
+  <div id="main-view"></div>
+</div>
+
+</div>
+
+<!-- Modal -->
+<div id="modal" style="display:none;" class="modal-bg" onclick="bgClose(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2 id="modal-title">Nieuw sourcing item</h2>
+      <button class="btn btn-icon btn-sm" onclick="closeModal()"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Productnaam *</label><input id="f-name" placeholder="bijv. Magnetische ring houder 58mm" /></div>
+      <div class="field-row">
+        <div class="field"><label>Leverancier</label>
+          <select id="f-supplier">
+            <option value="">— selecteer —</option>
+            <option>Comp</option><option>Alecter</option><option>Kingsun</option><option>Marvo</option><option>Zhounghenghua</option>
+          </select>
+        </div>
+        <div class="field"><label>Prioriteit</label>
+          <select id="f-prio"><option>Normaal</option><option>Hoog</option><option>Laag</option></select>
+        </div>
+      </div>
+      <div class="field"><label>Fase</label>
+        <select id="f-stage">
+          <option>Oriëntatie</option><option>RFQ verstuurd</option><option>Sample</option>
+          <option>Onderhandeling</option><option>Goedgekeurd</option><option>On hold</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Target prijs (USD)</label><input id="f-target" type="number" step="0.01" placeholder="0.00" /></div>
+        <div class="field"><label>Volume (stuks)</label><input id="f-volume" type="number" placeholder="200000" /></div>
+      </div>
+      <div class="field"><label>Specs / notities</label><textarea id="f-notes" placeholder="Specificaties, openstaande punten, compliance notities..."></textarea></div>
+      <div id="modal-err" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <div>
+        <button id="btn-delete" class="btn btn-danger btn-sm" style="display:none" onclick="deleteItem()"><i class="fa fa-trash"></i> Verwijderen</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="closeModal()">Annuleren</button>
+        <button class="btn btn-primary" onclick="saveItem()"><i class="fa fa-check"></i> Opslaan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL = 'https://nxtigysjwlushrlgftxg.supabase.co';
+const SUPA_KEY = 'sb_publishable_weVk4uRdM1rXgOD1JCToVQ_BDvKjFj_';
+const TABLE = 'sourcing_items';
+const STAGES = ['Oriëntatie','RFQ verstuurd','Sample','Onderhandeling','Goedgekeurd','On hold'];
+
+let items = [];
+let editingId = null;
+let currentView = 'kanban';
+
+const headers = {
+  'apikey': SUPA_KEY,
+  'Authorization': 'Bearer ' + SUPA_KEY,
+  'Content-Type': 'application/json'
+};
+
+async function api(method, path, body) {
+  const opts = { method, headers: { ...headers } };
+  if (method === 'POST') opts.headers['Prefer'] = 'return=representation';
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, opts);
+  if (res.status === 204) return null;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || data.hint || res.statusText);
+  return data;
+}
+
+function setStatus(state, msg) {
+  const el = document.getElementById('db-status');
+  el.className = 'db-pill ' + state;
+  el.innerHTML = '<span class="dot"></span> ' + msg;
+}
+
+async function loadData() {
+  setStatus('loading', 'laden...');
+  try {
+    const res = await fetch(SUPA_URL + '/rest/v1/' + TABLE + '?order=created_at.desc', { headers });
+    if (res.status === 404 || res.status === 400) {
+      const err = await res.json().catch(() => ({}));
+      if ((err.code === '42P01') || res.status === 404) { showSetup(); setStatus('err', 'tabel ontbreekt'); return; }
+    }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || res.statusText); }
+    items = await res.json();
+    setStatus('ok', 'verbonden · ' + items.length + ' items');
+    render();
+  } catch(e) {
+    setStatus('err', 'fout: ' + e.message);
+    document.getElementById('main-view').innerHTML = `<div class="setup-msg"><h3>Verbindingsfout</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('btn-kanban').className = 'view-btn' + (v === 'kanban' ? ' active' : '');
+  document.getElementById('btn-list').className = 'view-btn' + (v === 'list' ? ' active' : '');
+  render();
+}
+
+function filtered() {
+  const q = (document.getElementById('search').value || '').toLowerCase();
+  const sup = document.getElementById('filter-supplier').value;
+  const prio = document.getElementById('filter-prio').value;
+  return items.filter(i =>
+    (!q || (i.name||'').toLowerCase().includes(q) || (i.notes||'').toLowerCase().includes(q) || (i.supplier||'').toLowerCase().includes(q)) &&
+    (!sup || i.supplier === sup) &&
+    (!prio || i.priority === prio)
+  );
+}
+
+function render() {
+  renderStats();
+  if (currentView === 'kanban') renderKanban();
+  else renderList();
+}
+
+function renderStats() {
+  const counts = {};
+  STAGES.forEach(s => counts[s] = 0);
+  items.forEach(i => { if (counts[i.stage] !== undefined) counts[i.stage]++; });
+  document.getElementById('stats').innerHTML = [
+    { label: 'Totaal', val: items.length, accent: false },
+    { label: 'RFQ verstuurd', val: counts['RFQ verstuurd'], accent: false },
+    { label: 'Sample', val: counts['Sample'], accent: false },
+    { label: 'Onderhandeling', val: counts['Onderhandeling'], accent: false },
+    { label: 'Goedgekeurd', val: counts['Goedgekeurd'], accent: true },
+    { label: 'On hold', val: counts['On hold'], accent: false },
+  ].map(s => `<div class="stat"><div class="stat-val ${s.accent ? 'stat-accent' : ''}">${s.val}</div><div class="stat-label">${s.label}</div></div>`).join('');
+}
+
+function prioTag(p) {
+  if (p === 'Hoog') return '<span class="tag tag-red">Hoog</span>';
+  if (p === 'Laag') return '<span class="tag tag-gray">Laag</span>';
+  return '';
+}
+function stageTag(s) {
+  const map = { 'Oriëntatie':'gray','RFQ verstuurd':'blue','Sample':'amber','Onderhandeling':'green','Goedgekeurd':'green','On hold':'red' };
+  return `<span class="tag tag-${map[s]||'gray'}">${s}</span>`;
+}
+
+function renderKanban() {
+  const f = filtered();
+  const mv = document.getElementById('main-view');
+  mv.innerHTML = '<div class="kanban-wrap"><div class="kanban" id="kanban"></div></div>';
+  const kanban = document.getElementById('kanban');
+  STAGES.forEach(stage => {
+    const cards = f.filter(i => i.stage === stage);
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.innerHTML = `
+      <div class="col-head">
+        <span class="col-name">${stage}</span>
+        <span class="col-count">${cards.length}</span>
+      </div>
+      ${cards.length === 0 ? '<div class="col-empty">Geen items</div>' : ''}
+    `;
+    cards.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.onclick = () => openEdit(item);
+      const accentClass = item.priority === 'Hoog' ? 'accent-hoog' : item.priority === 'Laag' ? 'accent-laag' : 'accent-normaal';
+      card.innerHTML = `
+        <div class="card-accent ${accentClass}"></div>
+        <div class="card-name">${item.name}</div>
+        <div class="card-supplier">${item.supplier || '—'}</div>
+        <div class="card-tags">
+          ${item.priority && item.priority !== 'Normaal' ? prioTag(item.priority) : ''}
+          ${item.target_usd ? `<span class="tag tag-green">$ ${parseFloat(item.target_usd).toFixed(2)}</span>` : ''}
+          ${item.volume ? `<span class="tag tag-gray">${parseInt(item.volume).toLocaleString()} st</span>` : ''}
+        </div>
+      `;
+      col.appendChild(card);
+    });
+    kanban.appendChild(col);
+  });
+}
+
+function renderList() {
+  const f = filtered();
+  document.getElementById('main-view').innerHTML = `
+    <div class="list-wrap">
+      <table>
+        <thead><tr>
+          <th>Product</th><th>Leverancier</th><th>Fase</th><th>Prioriteit</th>
+          <th>Target USD</th><th>Volume</th><th>Notities</th>
+        </tr></thead>
+        <tbody>
+          ${f.map(item => `<tr onclick="openEdit(${encodeItem(item)})">
+            <td style="font-weight:500">${item.name}</td>
+            <td>${item.supplier || '—'}</td>
+            <td>${stageTag(item.stage)}</td>
+            <td>${item.priority || '—'}</td>
+            <td>${item.target_usd ? '$ ' + parseFloat(item.target_usd).toFixed(2) : '—'}</td>
+            <td>${item.volume ? parseInt(item.volume).toLocaleString() : '—'}</td>
+            <td style="color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.notes || '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function encodeItem(item) {
+  return "JSON.parse(decodeURIComponent('" + encodeURIComponent(JSON.stringify(item)) + "'))";
+}
+
+function showSetup() {
+  document.getElementById('main-view').innerHTML = `
+    <div class="setup-msg">
+      <h3>⚠ Eenmalige setup vereist</h3>
+      <p>Ga naar <strong>Supabase → SQL Editor</strong> en voer onderstaande query uit, daarna klik je op Vernieuwen.</p>
+      <code>CREATE TABLE sourcing_items (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name text NOT NULL,
+  supplier text,
+  stage text DEFAULT 'Oriëntatie',
+  priority text DEFAULT 'Normaal',
+  target_usd numeric,
+  volume integer,
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE sourcing_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_all" ON sourcing_items
+  FOR ALL USING (true) WITH CHECK (true);</code>
+      <button class="btn btn-primary" onclick="loadData()"><i class="fa fa-rotate-right"></i> Vernieuwen</button>
+    </div>`;
+}
+
+function openAdd() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Nieuw sourcing item';
+  document.getElementById('btn-delete').style.display = 'none';
+  ['f-name','f-target','f-volume','f-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-supplier').value = '';
+  document.getElementById('f-stage').value = 'Oriëntatie';
+  document.getElementById('f-prio').value = 'Normaal';
+  document.getElementById('modal-err').textContent = '';
+  document.getElementById('modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function openEdit(item) {
+  editingId = item.id;
+  document.getElementById('modal-title').textContent = 'Item bewerken';
+  document.getElementById('btn-delete').style.display = 'inline-flex';
+  document.getElementById('f-name').value = item.name || '';
+  document.getElementById('f-supplier').value = item.supplier || '';
+  document.getElementById('f-stage').value = item.stage || 'Oriëntatie';
+  document.getElementById('f-prio').value = item.priority || 'Normaal';
+  document.getElementById('f-target').value = item.target_usd || '';
+  document.getElementById('f-volume').value = item.volume || '';
+  document.getElementById('f-notes').value = item.notes || '';
+  document.getElementById('modal-err').textContent = '';
+  document.getElementById('modal').style.display = 'flex';
+}
+
+async function saveItem() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('modal-err').textContent = 'Productnaam is verplicht'; return; }
+  const payload = {
+    name,
+    supplier: document.getElementById('f-supplier').value || null,
+    stage: document.getElementById('f-stage').value,
+    priority: document.getElementById('f-prio').value,
+    target_usd: parseFloat(document.getElementById('f-target').value) || null,
+    volume: parseInt(document.getElementById('f-volume').value) || null,
+    notes: document.getElementById('f-notes').value.trim() || null,
+    updated_at: new Date().toISOString()
+  };
+  document.getElementById('modal-err').textContent = '';
+  try {
+    if (editingId) {
+      await api('PATCH', TABLE + '?id=eq.' + editingId, payload);
+    } else {
+      await api('POST', TABLE, payload);
+    }
+    closeModal();
+    await loadData();
+  } catch(e) {
+    document.getElementById('modal-err').textContent = 'Fout: ' + e.message;
+  }
+}
+
+async function deleteItem() {
+  if (!editingId) return;
+  if (!confirm('Item verwijderen?')) return;
+  try {
+    await api('DELETE', TABLE + '?id=eq.' + editingId);
+    closeModal();
+    await loadData();
+  } catch(e) {
+    document.getElementById('modal-err').textContent = 'Fout: ' + e.message;
+  }
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function bgClose(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+loadData();
+</script>
+</body>
+</html>
