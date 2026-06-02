@@ -386,6 +386,10 @@ select:focus { border-color: var(--green); }
               </select>
             </div>
           </div>
+          <div class="field" style="margin-bottom:8px">
+            <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px">Combineer met andere dossiers van dit product</label>
+            <div id="mail-extra-dossiers" style="display:flex;flex-direction:column;gap:5px;margin-top:6px"></div>
+          </div>
           <button class="btn btn-sm" onclick="generateMail()" style="margin-bottom:8px">✦ Genereer concept mail</button>
           <div id="mail-output"></div>
           <div id="mail-copy-btn" style="display:none;margin-top:6px">
@@ -828,6 +832,7 @@ function openEditDossier(d) {
   document.getElementById('quotes-section').style.display='block';
   renderQuotesTable(d.id);
   renderActivityLog(d.id);
+  setTimeout(renderExtraDossierChecks, 100);
   document.getElementById('modal-dossier').style.display='flex';
 }
 async function saveDossier() {
@@ -993,36 +998,61 @@ async function renderActivityLog(dosId) {
 }
 
 // ===== MAIL GENERATOR =====
+function renderExtraDossierChecks() {
+  const container = document.getElementById('mail-extra-dossiers');
+  if(!container||!currentDossierId) return;
+  const dos = dossiers.find(d=>d.id===currentDossierId);
+  if(!dos) return;
+  const siblings = dossiers.filter(d=>d.product_id===dos.product_id && d.id!==currentDossierId);
+  if(!siblings.length){ container.innerHTML='<span style="font-size:12px;color:var(--faint)">Geen andere dossiers voor dit product</span>'; return; }
+  container.innerHTML = siblings.map(d=>{
+    const cl=clients.find(c=>c.id===d.client_id);
+    return `<label class="cert-check"><input type="checkbox" class="extra-dos-check" value="${d.id}" /> ${cl?.name||'—'} — ${d.volume?parseInt(d.volume).toLocaleString()+' st':''} ${d.target_usd?'· $'+d.target_usd:''}</label>`;
+  }).join('');
+}
+
 async function generateMail() {
   const supplierRaw=document.getElementById('mail-supplier').value;
   const mailType=document.getElementById('mail-type').value;
   if(!supplierRaw){alert('Selecteer een leverancier voor de mail');return;}
   if(!currentDossierId){alert('Sla het dossier eerst op');return;}
+
+  // Verzamel huidig dossier + aangevinkte extra dossiers
   const dos=dossiers.find(d=>d.id===currentDossierId);
+  const extraChecked=[...document.querySelectorAll('.extra-dos-check:checked')].map(cb=>dossiers.find(d=>d.id===cb.value)).filter(Boolean);
+  const allDossiers=[dos,...extraChecked];
   const prod=dos?products.find(p=>p.id===dos.product_id):null;
-  const client=dos?clients.find(c=>c.id===dos.client_id):null;
-  const certs=[];
-  if(dos?.requires_grs) certs.push('GRS');
-  if(dos?.requires_cnas) certs.push('CNAS lab certificaat');
-  if(dos?.extra_certs) certs.push(...dos.extra_certs.split(',').filter(Boolean));
+
+  // Bouw programma-omschrijving per dossier
+  const programs = allDossiers.map((d,i)=>{
+    const client=clients.find(c=>c.id===d.client_id);
+    const certs=[];
+    if(d.requires_grs) certs.push('GRS');
+    if(d.requires_cnas) certs.push('CNAS lab certificate');
+    if(d.extra_certs) certs.push(...d.extra_certs.split(',').filter(Boolean));
+    return `Program ${i+1} — ${client?.name||'Retail'}: ${d.volume?parseInt(d.volume).toLocaleString()+' units':''} ${d.target_usd?'· target USD '+d.target_usd:''} · Certs: ${certs.join(', ')||'CE, RoHS'}`;
+  }).join('
+');
+
   const mailOut=document.getElementById('mail-output');
   mailOut.innerHTML='<div class="ai-loading"><div class="spinner"></div> Mail genereren...</div>';
   document.getElementById('mail-copy-btn').style.display='none';
   const contactMap={'Comp (Jane Song)':'Hi Jane,','Alecter (Benny Lau)':'Hi Benny,','Kingsun (Lydia)':'Hi Lydia,','Marvo (Katherine)':'Hi Katherine,','Zhounghenghua (Lara)':'Hi Lara,'};
   const greeting=contactMap[supplierRaw]||'Hi,';
+  const multiProgram = allDossiers.length > 1;
   try {
-    const res=await fetch(AI,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`Schrijf een professionele inkoop e-mail in het Engels van Michelle Raijmakers (Buyer bij SHI B.V.) naar een leverancier.
+    const res=await fetch('/api/mail',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:`Schrijf een professionele inkoop e-mail in het Engels van Michelle Raijmakers (Buyer bij SHI B.V.) naar een leverancier.
 
 Type mail: ${mailType}
 Aanhef: ${greeting}
 Product: ${prod?.name||'(onbekend)'}
 Specs: ${prod?.specs||'zie attachment'}
-Klant: ${client?.name||'retail klant'}
-Volume: ${dos?.volume?dos.volume.toLocaleString()+' units':'200,000 units (indicatief)'}
-Target FOB prijs: ${dos?.target_usd?'USD '+dos.target_usd:'nader te bepalen'}
-Vereiste certificeringen: ${certs.length?certs.join(', '):'CE, RoHS'}
+${multiProgram?'Dit is een gecombineerde RFQ voor meerdere programmas — zet elk programma duidelijk apart in de mail met een header per programma (Program 1, Program 2 etc.)':''}
 
-Stijl: kort, informeel maar professioneel, direct to the point. Geen overbodige tekst. Sluiten met deze handtekening exact:
+Programma details:
+${programs}
+
+Stijl: kort, informeel maar professioneel, direct to the point. Geen overbodige tekst. Vraag per programma om: unit prijs FOB, MOQ en lead time. Sluiten met deze handtekening exact:
 
 With kind regards,
 Michelle Raijmakers
@@ -1032,9 +1062,10 @@ A: Laagveld 10, 5721 VV Asten, The Netherlands
 T: +31 493 680 966 | M: +31 6 13 871 687
 E: michelle.raijmakers@shi.nl | W: www.shi.nl
 
-Geef ALLEEN de mail tekst terug, geen uitleg.`}]})});
+Geef ALLEEN de mail tekst terug, geen uitleg.`})});
     const data=await res.json();
-    const text=data.content?.[0]?.text||'Kon geen mail genereren';
+    if(!res.ok) throw new Error(data.error||'AI fout');
+    const text=data.text||'Kon geen mail genereren';
     mailOut.innerHTML=`<div class="ai-mail">${text}</div>`;
     window._generatedMail=text;
     document.getElementById('mail-copy-btn').style.display='block';
