@@ -5,405 +5,611 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SHI — Sourcing Pipeline</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
-  :root {
-    --shi-green: #779D91;
-    --shi-green-dark: #4f7a6e;
-    --shi-green-light: #c8ddd8;
-    --shi-green-pale: #eef4f2;
-    --bg: #f7f8f6;
-    --surface: #ffffff;
-    --surface2: #f2f4f2;
-    --border: #e2e8e5;
-    --border-strong: #c8d4d0;
-    --text: #1a2320;
-    --text-muted: #6b7d78;
-    --text-faint: #a0b0ab;
-    --font: 'DM Sans', system-ui, sans-serif;
-    --mono: 'DM Mono', monospace;
-    --radius: 10px;
-    --radius-lg: 16px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  }
+:root {
+  --green: #779D91;
+  --green-d: #4f7a6e;
+  --green-l: #c8ddd8;
+  --green-p: #eef4f2;
+  --bg: #f5f6f4;
+  --surface: #ffffff;
+  --surface2: #f0f2f0;
+  --border: #e2e6e3;
+  --border-s: #c8d2ce;
+  --text: #1a2320;
+  --muted: #6b7d78;
+  --faint: #a8b8b3;
+  --danger: #c0392b;
+  --danger-bg: #fff0f0;
+  --amber: #92600a;
+  --amber-bg: #fef9ec;
+  --blue: #1a56a0;
+  --blue-bg: #eef4ff;
+  --font: 'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', monospace;
+  --r: 10px;
+  --r-lg: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+/* HEADER */
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 54px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark { width: 30px; height: 30px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; }
+.logo-name { font-size: 14px; font-weight: 500; }
+.logo-sub { font-size: 11px; color: var(--muted); }
+.db-pill { font-size: 11px; font-family: var(--mono); padding: 3px 9px; border-radius: 20px; border: 1px solid; display: inline-flex; align-items: center; gap: 5px; }
+.db-pill.ok { background: var(--green-p); color: var(--green-d); border-color: var(--green-l); }
+.db-pill.err { background: var(--danger-bg); color: var(--danger); border-color: #ffc5c5; }
+.db-pill.loading { background: var(--surface2); color: var(--muted); border-color: var(--border); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
 
-  /* Layout */
-  .app { display: grid; grid-template-rows: auto auto 1fr; min-height: 100vh; }
+/* NAV TABS */
+.nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; gap: 0; }
+.nav-tab { padding: 10px 16px; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--green-d); border-bottom-color: var(--green); font-weight: 500; }
 
-  /* Header */
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    position: sticky; top: 0; z-index: 50;
-  }
-  .logo { display: flex; align-items: center; gap: 10px; }
-  .logo-mark {
-    width: 32px; height: 32px;
-    background: var(--shi-green);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600; color: #fff; letter-spacing: -0.5px;
-  }
-  .logo-text { font-size: 14px; font-weight: 500; color: var(--text); }
-  .logo-sub { font-size: 12px; color: var(--text-muted); margin-top: -1px; }
-  .header-right { display: flex; align-items: center; gap: 8px; }
-  .header-user { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--shi-green); color: #fff; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+/* TOOLBAR */
+.toolbar { padding: 12px 24px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.search-wrap { position: relative; }
+.search-wrap svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--faint); width: 14px; height: 14px; }
+.search-wrap input { padding: 7px 10px 7px 28px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; outline: none; width: 200px; }
+.search-wrap input:focus { border-color: var(--green); }
+select { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; outline: none; cursor: pointer; }
+select:focus { border-color: var(--green); }
+.spacer { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--surface2); }
+.btn-primary { background: var(--green); border-color: var(--green); color: #fff; }
+.btn-primary:hover { background: var(--green-d); }
+.btn-danger { background: var(--danger-bg); border-color: #ffc5c5; color: var(--danger); }
+.btn-danger:hover { background: #ffe0e0; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-icon { padding: 7px 8px; }
 
-  /* Toolbar */
-  .toolbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 10px 24px;
-    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  }
-  .search-wrap { position: relative; flex: 0 0 220px; }
-  .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-faint); font-size: 13px; }
-  .search-wrap input { width: 100%; padding: 7px 10px 7px 30px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; outline: none; }
-  .search-wrap input:focus { border-color: var(--shi-green); background: var(--surface); }
-  select {
-    padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius);
-    background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; outline: none; cursor: pointer;
-  }
-  select:focus { border-color: var(--shi-green); }
-  .toolbar-spacer { flex: 1; }
+/* STATS */
+.stats { display: flex; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+.stat { flex: 1; background: var(--surface); padding: 12px 16px; text-align: center; min-width: 80px; }
+.stat-val { font-size: 20px; font-weight: 600; font-family: var(--mono); color: var(--text); }
+.stat-val.accent { color: var(--green-d); }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
-  /* Buttons */
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; font-weight: 400; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-  .btn:hover { background: var(--surface2); border-color: var(--border-strong); }
-  .btn-primary { background: var(--shi-green); border-color: var(--shi-green); color: #fff; }
-  .btn-primary:hover { background: var(--shi-green-dark); border-color: var(--shi-green-dark); }
-  .btn-danger { background: #fff0f0; border-color: #ffc5c5; color: #c0392b; }
-  .btn-danger:hover { background: #ffe0e0; }
-  .btn-sm { padding: 4px 10px; font-size: 12px; }
-  .btn-icon { padding: 7px 9px; }
+/* KANBAN */
+.kanban-wrap { padding: 16px 24px 24px; overflow-x: auto; }
+.kanban { display: flex; gap: 12px; min-width: max-content; align-items: flex-start; }
+.col { width: 250px; background: var(--surface2); border-radius: var(--r-lg); padding: 10px; border: 1px solid var(--border); }
+.col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 2px 4px; }
+.col-name { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.col-badge { font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; color: var(--muted); font-family: var(--mono); }
 
-  /* Stats bar */
-  .stats { display: flex; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
-  .stat { flex: 1; background: var(--surface); padding: 14px 20px; text-align: center; }
-  .stat-val { font-size: 22px; font-weight: 600; color: var(--text); font-family: var(--mono); }
-  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
-  .stat-accent { color: var(--shi-green); }
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 11px 12px; margin-bottom: 7px; cursor: pointer; position: relative; overflow: hidden; }
+.card:hover { border-color: var(--green-l); box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+.card-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.accent-hoog { background: var(--danger); }
+.accent-normaal { background: var(--green); }
+.accent-laag { background: var(--border-s); }
+.card-product { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; padding-left: 8px; }
+.card-client { font-size: 11px; color: var(--muted); padding-left: 8px; margin-top: 1px; }
+.card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 7px; padding-left: 8px; }
+.tag { font-size: 10px; padding: 2px 6px; border-radius: 5px; font-family: var(--mono); white-space: nowrap; }
+.tag-green { background: var(--green-p); color: var(--green-d); }
+.tag-amber { background: var(--amber-bg); color: var(--amber); }
+.tag-red { background: var(--danger-bg); color: var(--danger); }
+.tag-blue { background: var(--blue-bg); color: var(--blue); }
+.tag-gray { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.card-quotes { font-size: 11px; color: var(--muted); padding-left: 8px; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+.col-empty { text-align: center; padding: 20px 0; color: var(--faint); font-size: 12px; }
 
-  /* Kanban */
-  .kanban-wrap { padding: 20px 24px; overflow-x: auto; }
-  .kanban { display: flex; gap: 14px; min-width: max-content; align-items: flex-start; }
-  .col { width: 240px; background: var(--surface2); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--border); }
-  .col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
-  .col-name { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .col-count { font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; color: var(--text-muted); font-family: var(--mono); }
+/* LIST VIEW */
+.list-wrap { padding: 0 24px 24px; }
+.list-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); overflow: hidden; }
+.list-table th { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; padding: 9px 14px; text-align: left; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.list-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+.list-table tr:last-child td { border-bottom: none; }
+.list-table tr:hover td { background: var(--green-p); cursor: pointer; }
+.linked-badge { font-size: 10px; background: var(--blue-bg); color: var(--blue); border-radius: 4px; padding: 1px 5px; font-family: var(--mono); margin-left: 4px; }
 
-  /* Cards */
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 12px; margin-bottom: 8px;
-    cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
-    position: relative;
-  }
-  .card:hover { box-shadow: var(--shadow-md); border-color: var(--shi-green-light); }
-  .card-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
-  .card-supplier { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
-  .card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-  .tag { font-size: 11px; padding: 2px 7px; border-radius: 5px; font-family: var(--mono); }
-  .tag-green { background: var(--shi-green-pale); color: var(--shi-green-dark); }
-  .tag-amber { background: #fef9ec; color: #92600a; }
-  .tag-red { background: #fff0f0; color: #c0392b; }
-  .tag-blue { background: #eef4ff; color: #2563eb; }
-  .tag-gray { background: var(--surface2); color: var(--text-muted); }
-  .card-accent { position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; }
-  .accent-hoog { background: #e74c3c; }
-  .accent-normaal { background: var(--shi-green); }
-  .accent-laag { background: var(--border-strong); }
+/* PRODUCTS VIEW */
+.products-wrap { padding: 16px 24px 24px; }
+.product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); margin-bottom: 12px; overflow: hidden; }
+.product-header { padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; cursor: pointer; }
+.product-header:hover { background: var(--green-p); }
+.product-name { font-size: 14px; font-weight: 500; }
+.product-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.product-url { font-size: 11px; color: var(--blue); font-family: var(--mono); margin-top: 3px; text-decoration: none; }
+.product-url:hover { text-decoration: underline; }
+.product-dossiers { border-top: 1px solid var(--border); }
+.dossier-row { padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.dossier-row:last-child { border-bottom: none; }
+.dossier-row:hover { background: var(--surface2); }
+.dossier-client { font-size: 13px; font-weight: 500; min-width: 100px; }
+.dossier-stage { font-size: 11px; }
+.dossier-info { font-size: 12px; color: var(--muted); flex: 1; }
+.dossier-certs { display: flex; gap: 4px; }
+.add-dossier-row { padding: 8px 16px; }
 
-  /* Empty col */
-  .col-empty { text-align: center; padding: 20px 0; color: var(--text-faint); font-size: 12px; }
+/* MODAL */
+.modal-bg { position: fixed; inset: 0; background: rgba(10,18,15,0.45); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+.modal { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+.modal-lg { max-width: 720px; }
+.modal-head { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-head h2 { font-size: 15px; font-weight: 500; }
+.modal-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 13px; }
+.modal-foot { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--r); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; outline: none; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green); background: var(--surface); }
+.field textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.err { font-size: 12px; color: var(--danger); margin-top: 2px; }
+.field-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
-  /* Modal */
-  .modal-bg { position: fixed; inset: 0; background: rgba(15,20,18,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
-  .modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-md); }
-  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-  .modal-header h2 { font-size: 16px; font-weight: 500; }
-  .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
-  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
-  .field input, .field select, .field textarea {
-    width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);
-    background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; outline: none;
-  }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--shi-green); background: var(--surface); }
-  .field textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .error-msg { font-size: 12px; color: #c0392b; }
+/* CERT CHECKBOXES */
+.cert-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.cert-check { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+.cert-check input { cursor: pointer; accent-color: var(--green); }
 
-  /* Setup message */
-  .setup-msg { margin: 24px; background: #fffbec; border: 1px solid #f0d070; border-radius: var(--radius-lg); padding: 20px 24px; }
-  .setup-msg h3 { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #92600a; }
-  .setup-msg p { font-size: 13px; color: #6b4f10; margin-bottom: 12px; }
-  .setup-msg code { display: block; background: #1a2320; color: #c8ddd8; padding: 14px 16px; border-radius: var(--radius); font-family: var(--mono); font-size: 12px; white-space: pre; overflow-x: auto; line-height: 1.6; margin-bottom: 12px; }
+/* QUOTES TABLE */
+.quotes-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.quotes-table th { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; padding: 6px 10px; text-align: left; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.quotes-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.quotes-table tr:last-child td { border-bottom: none; }
+.quote-selected { background: var(--green-p) !important; }
+.quote-rejected { opacity: 0.5; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+.dot-selected { background: var(--green-d); }
+.dot-rejected { background: var(--danger); }
+.dot-open { background: var(--amber); }
 
-  /* DB status pill */
-  .db-pill { font-size: 11px; font-family: var(--mono); padding: 3px 8px; border-radius: 20px; border: 1px solid; display: inline-flex; align-items: center; gap: 5px; }
-  .db-pill.ok { background: #eef7f4; color: var(--shi-green-dark); border-color: var(--shi-green-light); }
-  .db-pill.err { background: #fff0f0; color: #c0392b; border-color: #ffc5c5; }
-  .db-pill.loading { background: var(--surface2); color: var(--text-muted); border-color: var(--border); }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+/* AI mail area */
+.ai-mail { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; font-size: 12px; line-height: 1.7; font-family: var(--mono); white-space: pre-wrap; max-height: 320px; overflow-y: auto; }
+.ai-loading { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; padding: 16px 0; }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  /* View toggle */
-  .view-toggle { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2px; }
-  .view-btn { padding: 4px 8px; border-radius: 7px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; }
-  .view-btn.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+/* ACTIVITY LOG */
+.log-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.log-item:last-child { border-bottom: none; }
+.log-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-l); border: 2px solid var(--green); margin-top: 4px; flex-shrink: 0; }
+.log-action { font-size: 12px; font-weight: 500; }
+.log-detail { font-size: 12px; color: var(--muted); }
+.log-time { font-size: 11px; color: var(--faint); font-family: var(--mono); }
 
-  /* List view */
-  .list-wrap { padding: 0 24px 24px; }
-  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
-  th { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; padding: 10px 16px; text-align: left; background: var(--surface2); border-bottom: 1px solid var(--border); }
-  td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--shi-green-pale); cursor: pointer; }
+/* CLIENTS VIEW */
+.clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 16px 24px 24px; }
+.client-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px; cursor: pointer; }
+.client-card:hover { border-color: var(--green-l); }
+.client-name { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+.client-certs { display: flex; gap: 5px; flex-wrap: wrap; }
 
-  @media (max-width: 600px) {
-    header { padding: 0 16px; }
-    .toolbar { padding: 10px 16px; }
-    .kanban-wrap { padding: 16px; }
-    .stat { padding: 10px 14px; }
-    .stat-val { font-size: 18px; }
-    .field-row { grid-template-columns: 1fr; }
-  }
+/* VIEW TOGGLE */
+.view-toggle { display: flex; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 2px; gap: 2px; }
+.vbtn { padding: 4px 8px; border-radius: 7px; border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; }
+.vbtn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+/* SECTION HEADER */
+.section-head { display: flex; align-items: center; justify-content: space-between; padding: 0 0 12px; }
+.section-head h3 { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* CALC RESULT */
+.calc-box { background: var(--green-p); border: 1px solid var(--green-l); border-radius: var(--r); padding: 10px 12px; }
+.calc-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+.calc-row.total { font-weight: 600; border-top: 1px solid var(--green-l); margin-top: 4px; padding-top: 6px; font-size: 13px; }
+.calc-ok { color: var(--green-d); font-weight: 600; }
+.calc-warn { color: var(--danger); font-weight: 600; }
+
+/* SCRAPE SECTION */
+.scrape-row { display: flex; gap: 8px; }
+.scrape-row input { flex: 1; }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  header, .toolbar, .kanban-wrap, .products-wrap, .list-wrap, .clients-grid { padding-left: 16px; padding-right: 16px; }
+  .field-row, .field-row-3 { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
-<div class="app">
 
 <header>
   <div class="logo">
     <div class="logo-mark">SHI</div>
     <div>
-      <div class="logo-text">Sourcing Pipeline</div>
-      <div class="logo-sub">Multimedia — Michelle & Marco</div>
+      <div class="logo-name">Sourcing Pipeline</div>
+      <div class="logo-sub">Multimedia · Michelle & Marco</div>
     </div>
   </div>
-  <div class="header-right">
+  <div style="display:flex;align-items:center;gap:10px;">
     <span id="db-status" class="db-pill loading"><span class="dot"></span> verbinden...</span>
-    <div class="header-user">
-      <div class="avatar">MR</div>
-    </div>
   </div>
 </header>
 
-<div class="toolbar">
-  <div class="search-wrap">
-    <i class="fa fa-search"></i>
-    <input type="text" id="search" placeholder="Zoeken..." oninput="render()" />
-  </div>
-  <select id="filter-supplier" onchange="render()">
-    <option value="">Alle leveranciers</option>
-    <option>Comp</option><option>Alecter</option><option>Kingsun</option><option>Marvo</option><option>Zhounghenghua</option>
-  </select>
-  <select id="filter-prio" onchange="render()">
-    <option value="">Alle prioriteit</option>
-    <option>Hoog</option><option>Normaal</option><option>Laag</option>
-  </select>
-  <div class="toolbar-spacer"></div>
-  <div class="view-toggle">
-    <button class="view-btn active" id="btn-kanban" onclick="setView('kanban')"><i class="fa fa-columns"></i></button>
-    <button class="view-btn" id="btn-list" onclick="setView('list')"><i class="fa fa-list"></i></button>
-  </div>
-  <button class="btn" onclick="loadData()"><i class="fa fa-rotate-right"></i></button>
-  <button class="btn btn-primary" onclick="openAdd()"><i class="fa fa-plus"></i> Nieuw item</button>
+<div class="nav">
+  <div class="nav-tab active" onclick="switchTab('pipeline')" id="tab-pipeline">Pipeline</div>
+  <div class="nav-tab" onclick="switchTab('products')" id="tab-products">Producten</div>
+  <div class="nav-tab" onclick="switchTab('clients')" id="tab-clients">Klanten</div>
 </div>
 
-<div>
-  <div class="stats" id="stats"></div>
-  <div id="main-view"></div>
-</div>
-
-</div>
-
-<!-- Modal -->
-<div id="modal" style="display:none;" class="modal-bg" onclick="bgClose(event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h2 id="modal-title">Nieuw sourcing item</h2>
-      <button class="btn btn-icon btn-sm" onclick="closeModal()"><i class="fa fa-xmark"></i></button>
+<div id="view-pipeline">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="Zoeken..." oninput="renderPipeline()" />
     </div>
+    <select id="filter-client" onchange="renderPipeline()"><option value="">Alle klanten</option></select>
+    <select id="filter-prio" onchange="renderPipeline()">
+      <option value="">Alle prioriteit</option>
+      <option>Hoog</option><option>Normaal</option><option>Laag</option>
+    </select>
+    <div class="spacer"></div>
+    <div class="view-toggle">
+      <button class="vbtn active" id="vbtn-kanban" onclick="setPipelineView('kanban')">Kanban</button>
+      <button class="vbtn" id="vbtn-list" onclick="setPipelineView('list')">Lijst</button>
+    </div>
+    <button class="btn" onclick="loadAll()">↺</button>
+    <button class="btn btn-primary" onclick="openNewDossier()">+ Nieuw dossier</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div id="pipeline-content"></div>
+</div>
+
+<div id="view-products" style="display:none">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="prod-search" placeholder="Zoeken..." oninput="renderProducts()" />
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-primary" onclick="openNewProduct()">+ Nieuw product</button>
+  </div>
+  <div class="products-wrap" id="products-content"></div>
+</div>
+
+<div id="view-clients" style="display:none">
+  <div class="toolbar">
+    <div class="spacer"></div>
+    <button class="btn btn-primary" onclick="openNewClient()">+ Nieuwe klant</button>
+  </div>
+  <div class="clients-grid" id="clients-content"></div>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Product modal -->
+<div id="modal-product" style="display:none" class="modal-bg" onclick="bgClose(event,'modal-product')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><h2 id="mp-title">Nieuw product</h2><button class="btn btn-icon btn-sm" onclick="closeModal('modal-product')">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label>Productnaam *</label><input id="f-name" placeholder="bijv. Magnetische ring houder 58mm" /></div>
+      <div class="field">
+        <label>Product URL (AliExpress, website...)</label>
+        <div class="scrape-row">
+          <input id="mp-url" placeholder="https://..." />
+          <button class="btn btn-sm" onclick="scrapeUrl()" id="scrape-btn">AI ophalen</button>
+        </div>
+        <div class="field-hint" id="scrape-status"></div>
+      </div>
+      <div class="field"><label>Productnaam *</label><input id="mp-name" placeholder="bijv. Magnetische ring houder 58mm N52" /></div>
+      <div class="field"><label>Categorie</label>
+        <select id="mp-cat">
+          <option value="">— selecteer —</option>
+          <option>Audio</option><option>Kabels & accessoires</option><option>Powerbanks & laders</option>
+          <option>Solar</option><option>Gaming</option><option>Trending / TikTok</option><option>Overig</option>
+        </select>
+      </div>
+      <div class="field"><label>Specs / omschrijving</label><textarea id="mp-specs" placeholder="Materiaal, afmetingen, kleur, certificeringen..."></textarea></div>
+      <div id="mp-err" class="err"></div>
+    </div>
+    <div class="modal-foot">
+      <button id="mp-del" class="btn btn-danger btn-sm" style="display:none" onclick="deleteProduct()">Verwijderen</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn" onclick="closeModal('modal-product')">Annuleren</button>
+        <button class="btn btn-primary" onclick="saveProduct()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dossier modal -->
+<div id="modal-dossier" style="display:none" class="modal-bg" onclick="bgClose(event,'modal-dossier')">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <div class="modal-head"><h2 id="md-title">Nieuw dossier</h2><button class="btn btn-icon btn-sm" onclick="closeModal('modal-dossier')">✕</button></div>
+    <div class="modal-body">
       <div class="field-row">
-        <div class="field"><label>Leverancier</label>
-          <select id="f-supplier">
-            <option value="">— selecteer —</option>
-            <option>Comp</option><option>Alecter</option><option>Kingsun</option><option>Marvo</option><option>Zhounghenghua</option>
+        <div class="field"><label>Product *</label>
+          <select id="md-product"><option value="">— selecteer product —</option></select>
+        </div>
+        <div class="field"><label>Klant *</label>
+          <select id="md-client" onchange="onClientChange()"><option value="">— selecteer klant —</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Fase</label>
+          <select id="md-stage">
+            <option>Oriëntatie</option><option>RFQ verstuurd</option><option>Sample</option>
+            <option>Onderhandeling</option><option>Goedgekeurd</option><option>On hold</option><option>Afgewezen</option>
           </select>
         </div>
         <div class="field"><label>Prioriteit</label>
-          <select id="f-prio"><option>Normaal</option><option>Hoog</option><option>Laag</option></select>
+          <select id="md-prio"><option>Normaal</option><option>Hoog</option><option>Laag</option></select>
         </div>
       </div>
-      <div class="field"><label>Fase</label>
-        <select id="f-stage">
-          <option>Oriëntatie</option><option>RFQ verstuurd</option><option>Sample</option>
-          <option>Onderhandeling</option><option>Goedgekeurd</option><option>On hold</option>
-        </select>
-      </div>
       <div class="field-row">
-        <div class="field"><label>Target prijs (USD)</label><input id="f-target" type="number" step="0.01" placeholder="0.00" /></div>
-        <div class="field"><label>Volume (stuks)</label><input id="f-volume" type="number" placeholder="200000" /></div>
+        <div class="field"><label>Volume (stuks)</label><input id="md-vol" type="number" placeholder="bijv. 200000" /></div>
+        <div class="field"><label>Target prijs (USD FOB)</label><input id="md-target" type="number" step="0.01" placeholder="0.00" /></div>
       </div>
-      <div class="field"><label>Specs / notities</label><textarea id="f-notes" placeholder="Specificaties, openstaande punten, compliance notities..."></textarea></div>
-      <div id="modal-err" class="error-msg"></div>
+      <div class="field">
+        <label>Vereiste certificeringen</label>
+        <div class="cert-row">
+          <label class="cert-check"><input type="checkbox" id="cert-grs" /> GRS</label>
+          <label class="cert-check"><input type="checkbox" id="cert-cnas" /> CNAS lab</label>
+          <label class="cert-check"><input type="checkbox" id="cert-ce" /> CE</label>
+          <label class="cert-check"><input type="checkbox" id="cert-rohs" /> RoHS</label>
+          <label class="cert-check"><input type="checkbox" id="cert-qi2" /> Qi2 MPP</label>
+          <label class="cert-check"><input type="checkbox" id="cert-tuv" /> TÜV/GS</label>
+        </div>
+      </div>
+      <div class="field"><label>Notities</label><textarea id="md-notes" placeholder="Openstaande punten, bijzonderheden..."></textarea></div>
+
+      <!-- Quotes sectie (alleen bij bewerken) -->
+      <div id="quotes-section" style="display:none">
+        <div class="section-head">
+          <h3>Leverancier quotes</h3>
+          <button class="btn btn-sm" onclick="openAddQuote()">+ Quote toevoegen</button>
+        </div>
+        <table class="quotes-table" id="quotes-table">
+          <thead><tr>
+            <th></th><th>Leverancier</th><th>Contact</th><th>FOB USD</th><th>MOQ</th><th>Levertijd</th><th>Calc. inkoop</th><th>Binnen target</th><th></th>
+          </tr></thead>
+          <tbody id="quotes-tbody"></tbody>
+        </table>
+        <div style="margin-top:12px">
+          <div class="section-head"><h3>Mail genereren</h3></div>
+          <div class="field-row" style="margin-bottom:8px">
+            <div class="field"><label>Leverancier voor mail</label>
+              <select id="mail-supplier">
+                <option value="">— selecteer —</option>
+                <option>Comp (Jane Song)</option><option>Alecter (Benny Lau)</option><option>Kingsun (Lydia)</option>
+                <option>Marvo (Katherine)</option><option>Zhounghenghua (Lara)</option>
+              </select>
+            </div>
+            <div class="field"><label>Type mail</label>
+              <select id="mail-type">
+                <option>RFQ — offerte opvragen</option>
+                <option>Follow-up — status opvragen</option>
+                <option>Sample request</option>
+                <option>Onderhandeling — counter offer</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-sm" onclick="generateMail()" style="margin-bottom:8px">✦ Genereer concept mail</button>
+          <div id="mail-output"></div>
+          <div id="mail-copy-btn" style="display:none;margin-top:6px">
+            <button class="btn btn-sm" onclick="copyMail()">Kopieer mail</button>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="section-head"><h3>Activiteit</h3></div>
+          <div id="activity-log"></div>
+        </div>
+      </div>
+
+      <div id="md-err" class="err"></div>
     </div>
-    <div class="modal-footer">
-      <div>
-        <button id="btn-delete" class="btn btn-danger btn-sm" style="display:none" onclick="deleteItem()"><i class="fa fa-trash"></i> Verwijderen</button>
+    <div class="modal-foot">
+      <button id="md-del" class="btn btn-danger btn-sm" style="display:none" onclick="deleteDossier()">Verwijderen</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn" onclick="closeModal('modal-dossier')">Annuleren</button>
+        <button class="btn btn-primary" onclick="saveDossier()">Opslaan</button>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn" onclick="closeModal()">Annuleren</button>
-        <button class="btn btn-primary" onclick="saveItem()"><i class="fa fa-check"></i> Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quote modal -->
+<div id="modal-quote" style="display:none" class="modal-bg" onclick="bgClose(event,'modal-quote')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><h2 id="mq-title">Quote toevoegen</h2><button class="btn btn-icon btn-sm" onclick="closeModal('modal-quote')">✕</button></div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field"><label>Leverancier *</label>
+          <select id="mq-supplier">
+            <option value="">— selecteer —</option>
+            <option>Comp</option><option>Alecter</option><option>Kingsun</option><option>Marvo</option><option>Zhounghenghua</option><option>Overig</option>
+          </select>
+        </div>
+        <div class="field"><label>Contactpersoon</label><input id="mq-contact" placeholder="bijv. Benny Lau" /></div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>FOB prijs (USD)</label><input id="mq-fob" type="number" step="0.001" placeholder="0.000" oninput="calcQuote()" /></div>
+        <div class="field"><label>MOQ (stuks)</label><input id="mq-moq" type="number" placeholder="10000" /></div>
+        <div class="field"><label>Levertijd (dagen)</label><input id="mq-lead" type="number" placeholder="45" /></div>
+      </div>
+      <div id="calc-result"></div>
+      <div class="field"><label>Bestandsnaam / referentie</label><input id="mq-file" placeholder="bijv. Alecter_quote_jun2026.xlsx" /></div>
+      <div class="field"><label>Notities</label><textarea id="mq-notes" placeholder="Condities, opmerkingen..."></textarea></div>
+      <div id="mq-err" class="err"></div>
+    </div>
+    <div class="modal-foot">
+      <button id="mq-del" class="btn btn-danger btn-sm" style="display:none" onclick="deleteQuote()">Verwijderen</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn" onclick="closeModal('modal-quote')">Annuleren</button>
+        <button class="btn btn-primary" onclick="saveQuote()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Client modal -->
+<div id="modal-client" style="display:none" class="modal-bg" onclick="bgClose(event,'modal-client')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><h2 id="mc-title">Nieuwe klant</h2><button class="btn btn-icon btn-sm" onclick="closeModal('modal-client')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Klantnaam *</label><input id="mc-name" placeholder="bijv. Jumbo" /></div>
+      <div class="field">
+        <label>Standaard certificeringen vereist</label>
+        <div class="cert-row">
+          <label class="cert-check"><input type="checkbox" id="mc-grs" /> GRS</label>
+          <label class="cert-check"><input type="checkbox" id="mc-cnas" /> CNAS lab</label>
+        </div>
+      </div>
+      <div class="field"><label>Notities</label><textarea id="mc-notes" placeholder="Bijzonderheden..."></textarea></div>
+      <div id="mc-err" class="err"></div>
+    </div>
+    <div class="modal-foot">
+      <button id="mc-del" class="btn btn-danger btn-sm" style="display:none" onclick="deleteClient()">Verwijderen</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn" onclick="closeModal('modal-client')">Annuleren</button>
+        <button class="btn btn-primary" onclick="saveClient()">Opslaan</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-const SUPA_URL = 'https://nxtigysjwlushrlgftxg.supabase.co';
-const SUPA_KEY = 'sb_publishable_weVk4uRdM1rXgOD1JCToVQ_BDvKjFj_';
-const TABLE = 'sourcing_items';
-const STAGES = ['Oriëntatie','RFQ verstuurd','Sample','Onderhandeling','Goedgekeurd','On hold'];
+const SUPA = 'https://nxtigysjwlushrlgftxg.supabase.co';
+const KEY  = 'sb_publishable_weVk4uRdM1rXgOD1JCToVQ_BDvKjFj_';
+const AI   = 'https://api.anthropic.com/v1/messages';
+const STAGES = ['Oriëntatie','RFQ verstuurd','Sample','Onderhandeling','Goedgekeurd','On hold','Afgewezen'];
 
-let items = [];
-let editingId = null;
-let currentView = 'kanban';
+// State
+let clients=[], products=[], dossiers=[], quotes=[], logs=[];
+let editProdId=null, editDosId=null, editQuoteId=null, editClientId=null;
+let currentDossierId=null;
+let pipelineView='kanban';
+let currentTab='pipeline';
 
-const headers = {
-  'apikey': SUPA_KEY,
-  'Authorization': 'Bearer ' + SUPA_KEY,
-  'Content-Type': 'application/json'
-};
+// ===== API =====
+const H = { 'apikey':KEY, 'Authorization':'Bearer '+KEY, 'Content-Type':'application/json' };
 
-async function api(method, path, body) {
-  const opts = { method, headers: { ...headers } };
-  if (method === 'POST') opts.headers['Prefer'] = 'return=representation';
+async function db(method, table, params='', body=null) {
+  const opts = { method, headers:{...H} };
+  if (method==='POST') opts.headers['Prefer']='return=representation';
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(SUPA_URL + '/rest/v1/' + path, opts);
-  if (res.status === 204) return null;
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || data.hint || res.statusText);
-  return data;
+  const res = await fetch(`${SUPA}/rest/v1/${table}${params}`, opts);
+  if (res.status===204) return null;
+  const d = await res.json();
+  if (!res.ok) throw new Error(d.message || d.hint || res.statusText);
+  return d;
 }
 
-function setStatus(state, msg) {
+function setStatus(s, msg) {
   const el = document.getElementById('db-status');
-  el.className = 'db-pill ' + state;
-  el.innerHTML = '<span class="dot"></span> ' + msg;
+  el.className = 'db-pill '+s;
+  el.innerHTML = `<span class="dot"></span> ${msg}`;
 }
 
-async function loadData() {
-  setStatus('loading', 'laden...');
+// ===== LOAD =====
+async function loadAll() {
+  setStatus('loading','laden...');
   try {
-    const res = await fetch(SUPA_URL + '/rest/v1/' + TABLE + '?order=created_at.desc', { headers });
-    if (res.status === 404 || res.status === 400) {
-      const err = await res.json().catch(() => ({}));
-      if ((err.code === '42P01') || res.status === 404) { showSetup(); setStatus('err', 'tabel ontbreekt'); return; }
-    }
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || res.statusText); }
-    items = await res.json();
-    setStatus('ok', 'verbonden · ' + items.length + ' items');
+    [clients, products, dossiers, quotes] = await Promise.all([
+      db('GET','clients','?order=name'),
+      db('GET','products','?order=created_at.desc'),
+      db('GET','dossiers','?order=created_at.desc'),
+      db('GET','quotes','?order=created_at.desc'),
+    ]);
+    setStatus('ok',`verbonden · ${dossiers.length} dossiers`);
+    populateClientFilter();
     render();
   } catch(e) {
-    setStatus('err', 'fout: ' + e.message);
-    document.getElementById('main-view').innerHTML = `<div class="setup-msg"><h3>Verbindingsfout</h3><p>${e.message}</p></div>`;
+    setStatus('err','fout: '+e.message);
+    if (e.message.includes('42P01')||e.message.includes('does not exist')) showSetup();
   }
 }
 
-function setView(v) {
-  currentView = v;
-  document.getElementById('btn-kanban').className = 'view-btn' + (v === 'kanban' ? ' active' : '');
-  document.getElementById('btn-list').className = 'view-btn' + (v === 'list' ? ' active' : '');
-  render();
-}
-
-function filtered() {
-  const q = (document.getElementById('search').value || '').toLowerCase();
-  const sup = document.getElementById('filter-supplier').value;
-  const prio = document.getElementById('filter-prio').value;
-  return items.filter(i =>
-    (!q || (i.name||'').toLowerCase().includes(q) || (i.notes||'').toLowerCase().includes(q) || (i.supplier||'').toLowerCase().includes(q)) &&
-    (!sup || i.supplier === sup) &&
-    (!prio || i.priority === prio)
-  );
+function populateClientFilter() {
+  const sel = document.getElementById('filter-client');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Alle klanten</option>' + clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  sel.value = cur;
 }
 
 function render() {
+  if (currentTab==='pipeline') { renderStats(); if(pipelineView==='kanban') renderKanban(); else renderList(); }
+  if (currentTab==='products') renderProducts();
+  if (currentTab==='clients') renderClients();
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  currentTab = tab;
+  ['pipeline','products','clients'].forEach(t => {
+    document.getElementById('view-'+t).style.display = t===tab ? 'block' : 'none';
+    document.getElementById('tab-'+t).className = 'nav-tab'+(t===tab?' active':'');
+  });
+  render();
+}
+
+// ===== PIPELINE VIEW =====
+function setPipelineView(v) {
+  pipelineView = v;
+  document.getElementById('vbtn-kanban').className = 'vbtn'+(v==='kanban'?' active':'');
+  document.getElementById('vbtn-list').className = 'vbtn'+(v==='list'?' active':'');
   renderStats();
-  if (currentView === 'kanban') renderKanban();
-  else renderList();
+  if(v==='kanban') renderKanban(); else renderList();
+}
+
+function filteredDossiers() {
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const cl = document.getElementById('filter-client').value;
+  const pr = document.getElementById('filter-prio').value;
+  return dossiers.filter(d => {
+    const prod = products.find(p=>p.id===d.product_id);
+    const client = clients.find(c=>c.id===d.client_id);
+    const name = (prod?.name||'').toLowerCase();
+    const cname = (client?.name||'').toLowerCase();
+    return (!q || name.includes(q) || cname.includes(q) || (d.notes||'').toLowerCase().includes(q)) &&
+           (!cl || d.client_id===cl) &&
+           (!pr || d.priority===pr);
+  });
 }
 
 function renderStats() {
-  const counts = {};
-  STAGES.forEach(s => counts[s] = 0);
-  items.forEach(i => { if (counts[i.stage] !== undefined) counts[i.stage]++; });
+  const counts = {}; STAGES.forEach(s=>counts[s]=0);
+  dossiers.forEach(d=>{ if(counts[d.stage]!==undefined) counts[d.stage]++; });
   document.getElementById('stats').innerHTML = [
-    { label: 'Totaal', val: items.length, accent: false },
-    { label: 'RFQ verstuurd', val: counts['RFQ verstuurd'], accent: false },
-    { label: 'Sample', val: counts['Sample'], accent: false },
-    { label: 'Onderhandeling', val: counts['Onderhandeling'], accent: false },
-    { label: 'Goedgekeurd', val: counts['Goedgekeurd'], accent: true },
-    { label: 'On hold', val: counts['On hold'], accent: false },
-  ].map(s => `<div class="stat"><div class="stat-val ${s.accent ? 'stat-accent' : ''}">${s.val}</div><div class="stat-label">${s.label}</div></div>`).join('');
-}
-
-function prioTag(p) {
-  if (p === 'Hoog') return '<span class="tag tag-red">Hoog</span>';
-  if (p === 'Laag') return '<span class="tag tag-gray">Laag</span>';
-  return '';
-}
-function stageTag(s) {
-  const map = { 'Oriëntatie':'gray','RFQ verstuurd':'blue','Sample':'amber','Onderhandeling':'green','Goedgekeurd':'green','On hold':'red' };
-  return `<span class="tag tag-${map[s]||'gray'}">${s}</span>`;
+    {l:'Totaal',v:dossiers.length,a:false},
+    {l:'RFQ verstuurd',v:counts['RFQ verstuurd'],a:false},
+    {l:'Sample',v:counts['Sample'],a:false},
+    {l:'Onderhandeling',v:counts['Onderhandeling'],a:false},
+    {l:'Goedgekeurd',v:counts['Goedgekeurd'],a:true},
+    {l:'On hold',v:counts['On hold'],a:false},
+  ].map(s=>`<div class="stat"><div class="stat-val${s.a?' accent':''}">${s.v}</div><div class="stat-label">${s.l}</div></div>`).join('');
 }
 
 function renderKanban() {
-  const f = filtered();
-  const mv = document.getElementById('main-view');
-  mv.innerHTML = '<div class="kanban-wrap"><div class="kanban" id="kanban"></div></div>';
+  const f = filteredDossiers();
+  const wrap = document.getElementById('pipeline-content');
+  wrap.innerHTML = '<div class="kanban-wrap"><div class="kanban" id="kanban"></div></div>';
   const kanban = document.getElementById('kanban');
   STAGES.forEach(stage => {
-    const cards = f.filter(i => i.stage === stage);
-    const col = document.createElement('div');
-    col.className = 'col';
-    col.innerHTML = `
-      <div class="col-head">
-        <span class="col-name">${stage}</span>
-        <span class="col-count">${cards.length}</span>
-      </div>
-      ${cards.length === 0 ? '<div class="col-empty">Geen items</div>' : ''}
-    `;
-    cards.forEach(item => {
+    const cards = f.filter(d=>d.stage===stage);
+    const col = document.createElement('div'); col.className='col';
+    col.innerHTML = `<div class="col-head"><span class="col-name">${stage}</span><span class="col-badge">${cards.length}</span></div>${cards.length===0?'<div class="col-empty">Geen items</div>':''}`;
+    cards.forEach(d => {
+      const prod = products.find(p=>p.id===d.product_id);
+      const client = clients.find(c=>c.id===d.client_id);
+      const dQuotes = quotes.filter(q=>q.dossier_id===d.id);
+      const acc = d.priority==='Hoog'?'accent-hoog':d.priority==='Laag'?'accent-laag':'accent-normaal';
+      const certs = buildCertTags(d);
       const card = document.createElement('div');
-      card.className = 'card';
-      card.onclick = () => openEdit(item);
-      const accentClass = item.priority === 'Hoog' ? 'accent-hoog' : item.priority === 'Laag' ? 'accent-laag' : 'accent-normaal';
-      card.innerHTML = `
-        <div class="card-accent ${accentClass}"></div>
-        <div class="card-name">${item.name}</div>
-        <div class="card-supplier">${item.supplier || '—'}</div>
+      card.className='card'; card.onclick=()=>openEditDossier(d);
+      card.innerHTML=`
+        <div class="card-accent ${acc}"></div>
+        <div class="card-product">${prod?.name||'—'}</div>
+        <div class="card-client">${client?.name||'—'}</div>
         <div class="card-tags">
-          ${item.priority && item.priority !== 'Normaal' ? prioTag(item.priority) : ''}
-          ${item.target_usd ? `<span class="tag tag-green">$ ${parseFloat(item.target_usd).toFixed(2)}</span>` : ''}
-          ${item.volume ? `<span class="tag tag-gray">${parseInt(item.volume).toLocaleString()} st</span>` : ''}
+          ${d.priority&&d.priority!=='Normaal'?`<span class="tag tag-${d.priority==='Hoog'?'red':'gray'}">${d.priority}</span>`:''}
+          ${d.target_usd?`<span class="tag tag-green">$${parseFloat(d.target_usd).toFixed(2)}</span>`:''}
+          ${d.volume?`<span class="tag tag-gray">${parseInt(d.volume).toLocaleString()} st</span>`:''}
+          ${certs}
         </div>
-      `;
+        ${dQuotes.length>0?`<div class="card-quotes">📋 ${dQuotes.length} quote${dQuotes.length>1?'s':''}</div>`:''}`;
       col.appendChild(card);
     });
     kanban.appendChild(col);
@@ -411,131 +617,496 @@ function renderKanban() {
 }
 
 function renderList() {
-  const f = filtered();
-  document.getElementById('main-view').innerHTML = `
+  const f = filteredDossiers();
+  document.getElementById('pipeline-content').innerHTML = `
     <div class="list-wrap">
-      <table>
-        <thead><tr>
-          <th>Product</th><th>Leverancier</th><th>Fase</th><th>Prioriteit</th>
-          <th>Target USD</th><th>Volume</th><th>Notities</th>
-        </tr></thead>
-        <tbody>
-          ${f.map(item => `<tr onclick="openEdit(${encodeItem(item)})">
-            <td style="font-weight:500">${item.name}</td>
-            <td>${item.supplier || '—'}</td>
-            <td>${stageTag(item.stage)}</td>
-            <td>${item.priority || '—'}</td>
-            <td>${item.target_usd ? '$ ' + parseFloat(item.target_usd).toFixed(2) : '—'}</td>
-            <td>${item.volume ? parseInt(item.volume).toLocaleString() : '—'}</td>
-            <td style="color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.notes || '—'}</td>
-          </tr>`).join('')}
-        </tbody>
+      <table class="list-table">
+        <thead><tr><th>Product</th><th>Klant</th><th>Fase</th><th>Prioriteit</th><th>Target USD</th><th>Volume</th><th>Quotes</th></tr></thead>
+        <tbody>${f.map(d=>{
+          const prod=products.find(p=>p.id===d.product_id);
+          const client=clients.find(c=>c.id===d.client_id);
+          const dQuotes=quotes.filter(q=>q.dossier_id===d.id);
+          const linkedCount = dossiers.filter(x=>x.product_id===d.product_id&&x.id!==d.id).length;
+          return `<tr onclick='openEditDossier(${escJ(d)})'>
+            <td><span style="font-weight:500">${prod?.name||'—'}</span>${linkedCount>0?`<span class="linked-badge">+${linkedCount}</span>`:''}</td>
+            <td>${client?.name||'—'}</td>
+            <td>${stageTag(d.stage)}</td>
+            <td>${d.priority||'—'}</td>
+            <td>${d.target_usd?'$'+parseFloat(d.target_usd).toFixed(2):'—'}</td>
+            <td>${d.volume?parseInt(d.volume).toLocaleString():'—'}</td>
+            <td>${dQuotes.length>0?dQuotes.length+' quote(s)':'—'}</td>
+          </tr>`;}).join('')}</tbody>
       </table>
     </div>`;
 }
 
-function encodeItem(item) {
-  return "JSON.parse(decodeURIComponent('" + encodeURIComponent(JSON.stringify(item)) + "'))";
+function buildCertTags(d) {
+  let t='';
+  if(d.requires_grs) t+=`<span class="tag tag-green">GRS</span>`;
+  if(d.requires_cnas) t+=`<span class="tag tag-blue">CNAS</span>`;
+  return t;
 }
 
-function showSetup() {
-  document.getElementById('main-view').innerHTML = `
-    <div class="setup-msg">
-      <h3>⚠ Eenmalige setup vereist</h3>
-      <p>Ga naar <strong>Supabase → SQL Editor</strong> en voer onderstaande query uit, daarna klik je op Vernieuwen.</p>
-      <code>CREATE TABLE sourcing_items (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  name text NOT NULL,
-  supplier text,
-  stage text DEFAULT 'Oriëntatie',
-  priority text DEFAULT 'Normaal',
-  target_usd numeric,
-  volume integer,
-  notes text,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+// ===== PRODUCTS VIEW =====
+function renderProducts() {
+  const q = (document.getElementById('prod-search').value||'').toLowerCase();
+  const filtered = products.filter(p=>!q||(p.name||'').toLowerCase().includes(q)||(p.specs||'').toLowerCase().includes(q));
+  const wrap = document.getElementById('products-content');
+  if (!filtered.length) { wrap.innerHTML='<div style="color:var(--faint);font-size:13px;padding:20px 0">Geen producten gevonden</div>'; return; }
+  wrap.innerHTML = filtered.map(p => {
+    const pDossiers = dossiers.filter(d=>d.product_id===p.id);
+    return `<div class="product-card">
+      <div class="product-header" onclick="openEditProduct(${escJ(p)})">
+        <div>
+          <div class="product-name">${p.name}</div>
+          ${p.category?`<div class="product-meta">${p.category}</div>`:''}
+          ${p.url?`<a class="product-url" href="${p.url}" target="_blank" onclick="event.stopPropagation()">${p.url.substring(0,60)}${p.url.length>60?'...':''}</a>`:''}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${pDossiers.length>0?`<span class="tag tag-gray">${pDossiers.length} dossier${pDossiers.length>1?'s':''}</span>`:''}
+          <span style="color:var(--faint)">✎</span>
+        </div>
+      </div>
+      ${pDossiers.length>0?`<div class="product-dossiers">
+        ${pDossiers.map(d=>{
+          const cl=clients.find(c=>c.id===d.client_id);
+          return `<div class="dossier-row" onclick="openEditDossier(${escJ(d)})">
+            <div class="dossier-client">${cl?.name||'—'}</div>
+            <div class="dossier-stage">${stageTag(d.stage)}</div>
+            <div class="dossier-info">${d.volume?parseInt(d.volume).toLocaleString()+' st':''} ${d.target_usd?'· $'+parseFloat(d.target_usd).toFixed(2):''}</div>
+            <div class="dossier-certs">${buildCertTags(d)}</div>
+          </div>`;}).join('')}
+        <div class="add-dossier-row"><button class="btn btn-sm" onclick="event.stopPropagation();openNewDossierForProduct('${p.id}')">+ Dossier toevoegen</button></div>
+      </div>`:'<div class="add-dossier-row"><button class="btn btn-sm" onclick="event.stopPropagation();openNewDossierForProduct(\''+p.id+'\')">+ Dossier toevoegen</button></div>'}
+    </div>`;
+  }).join('');
+}
 
-ALTER TABLE sourcing_items ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "allow_all" ON sourcing_items
-  FOR ALL USING (true) WITH CHECK (true);</code>
-      <button class="btn btn-primary" onclick="loadData()"><i class="fa fa-rotate-right"></i> Vernieuwen</button>
+// ===== CLIENTS VIEW =====
+function renderClients() {
+  document.getElementById('clients-content').innerHTML = clients.map(c => `
+    <div class="client-card" onclick="openEditClient(${escJ(c)})">
+      <div class="client-name">${c.name}</div>
+      <div class="client-certs">
+        ${c.requires_grs?'<span class="tag tag-green">GRS vereist</span>':''}
+        ${c.requires_cnas?'<span class="tag tag-blue">CNAS vereist</span>':''}
+      </div>
+      ${c.notes?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${c.notes}</div>`:''}
+    </div>`).join('');
+}
+
+// ===== HELPERS =====
+function stageTag(s) {
+  const m={'Oriëntatie':'gray','RFQ verstuurd':'blue','Sample':'amber','Onderhandeling':'green','Goedgekeurd':'green','On hold':'red','Afgewezen':'red'};
+  return `<span class="tag tag-${m[s]||'gray'}">${s}</span>`;
+}
+function escJ(obj) { return "JSON.parse(decodeURIComponent('"+encodeURIComponent(JSON.stringify(obj))+"'))"; }
+function bgClose(e,id) { if(e.target===document.getElementById(id)) closeModal(id); }
+function closeModal(id) { document.getElementById(id).style.display='none'; }
+
+// ===== PRODUCT MODAL =====
+function openNewProduct() {
+  editProdId=null;
+  document.getElementById('mp-title').textContent='Nieuw product';
+  document.getElementById('mp-del').style.display='none';
+  ['mp-url','mp-name','mp-specs'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('mp-cat').value='';
+  document.getElementById('mp-err').textContent='';
+  document.getElementById('scrape-status').textContent='';
+  document.getElementById('modal-product').style.display='flex';
+  setTimeout(()=>document.getElementById('mp-url').focus(),50);
+}
+function openEditProduct(p) {
+  editProdId=p.id;
+  document.getElementById('mp-title').textContent='Product bewerken';
+  document.getElementById('mp-del').style.display='inline-flex';
+  document.getElementById('mp-url').value=p.url||'';
+  document.getElementById('mp-name').value=p.name||'';
+  document.getElementById('mp-cat').value=p.category||'';
+  document.getElementById('mp-specs').value=p.specs||'';
+  document.getElementById('mp-err').textContent='';
+  document.getElementById('scrape-status').textContent='';
+  document.getElementById('modal-product').style.display='flex';
+}
+async function saveProduct() {
+  const name=document.getElementById('mp-name').value.trim();
+  if(!name){document.getElementById('mp-err').textContent='Naam is verplicht';return;}
+  const payload={name,url:document.getElementById('mp-url').value.trim()||null,category:document.getElementById('mp-cat').value||null,specs:document.getElementById('mp-specs').value.trim()||null,updated_at:new Date().toISOString()};
+  try {
+    if(editProdId) await db('PATCH','products','?id=eq.'+editProdId,payload);
+    else await db('POST','products','',payload);
+    closeModal('modal-product'); await loadAll();
+  } catch(e){document.getElementById('mp-err').textContent=e.message;}
+}
+async function deleteProduct() {
+  if(!editProdId||!confirm('Product en alle gekoppelde dossiers verwijderen?')) return;
+  try { await db('DELETE','products','?id=eq.'+editProdId); closeModal('modal-product'); await loadAll(); }
+  catch(e){document.getElementById('mp-err').textContent=e.message;}
+}
+
+// ===== SCRAPE URL =====
+async function scrapeUrl() {
+  const url = document.getElementById('mp-url').value.trim();
+  if(!url){document.getElementById('scrape-status').textContent='Voer eerst een URL in';return;}
+  document.getElementById('scrape-btn').textContent='Bezig...';
+  document.getElementById('scrape-btn').disabled=true;
+  document.getElementById('scrape-status').textContent='AI analyseert de URL...';
+  try {
+    const res = await fetch(AI, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:`Analyseer deze product URL en geef ALLEEN een JSON object terug (geen markdown, geen uitleg) met deze velden: name (productnaam, kort en specifiek), category (kies uit: Audio, Kabels & accessoires, Powerbanks & laders, Solar, Gaming, Trending / TikTok, Overig), specs (compacte opsomming van specs in het Nederlands, max 3 regels). URL: ${url}`}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text||'';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    if(parsed.name) document.getElementById('mp-name').value=parsed.name;
+    if(parsed.category) document.getElementById('mp-cat').value=parsed.category;
+    if(parsed.specs) document.getElementById('mp-specs').value=parsed.specs;
+    document.getElementById('scrape-status').textContent='✓ Gegevens ingevuld — controleer en pas aan';
+  } catch(e) {
+    document.getElementById('scrape-status').textContent='Kon URL niet analyseren — vul handmatig in';
+  }
+  document.getElementById('scrape-btn').textContent='AI ophalen';
+  document.getElementById('scrape-btn').disabled=false;
+}
+
+// ===== DOSSIER MODAL =====
+function populateDossierSelects() {
+  const ps=document.getElementById('md-product');
+  const cs=document.getElementById('md-client');
+  ps.innerHTML='<option value="">— selecteer product —</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  cs.innerHTML='<option value="">— selecteer klant —</option>'+clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+function onClientChange() {
+  const cid=document.getElementById('md-client').value;
+  const client=clients.find(c=>c.id===cid);
+  if(client) {
+    document.getElementById('cert-grs').checked=!!client.requires_grs;
+    document.getElementById('cert-cnas').checked=!!client.requires_cnas;
+  }
+}
+function openNewDossier() {
+  editDosId=null; currentDossierId=null;
+  document.getElementById('md-title').textContent='Nieuw dossier';
+  document.getElementById('md-del').style.display='none';
+  document.getElementById('quotes-section').style.display='none';
+  populateDossierSelects();
+  ['md-vol','md-target','md-notes'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('md-stage').value='Oriëntatie';
+  document.getElementById('md-prio').value='Normaal';
+  ['cert-grs','cert-cnas','cert-ce','cert-rohs','cert-qi2','cert-tuv'].forEach(i=>document.getElementById(i).checked=false);
+  document.getElementById('md-err').textContent='';
+  document.getElementById('mail-output').innerHTML='';
+  document.getElementById('mail-copy-btn').style.display='none';
+  document.getElementById('modal-dossier').style.display='flex';
+}
+function openNewDossierForProduct(prodId) {
+  openNewDossier();
+  document.getElementById('md-product').value=prodId;
+}
+function openEditDossier(d) {
+  editDosId=d.id; currentDossierId=d.id;
+  document.getElementById('md-title').textContent='Dossier bewerken';
+  document.getElementById('md-del').style.display='inline-flex';
+  populateDossierSelects();
+  document.getElementById('md-product').value=d.product_id||'';
+  document.getElementById('md-client').value=d.client_id||'';
+  document.getElementById('md-stage').value=d.stage||'Oriëntatie';
+  document.getElementById('md-prio').value=d.priority||'Normaal';
+  document.getElementById('md-vol').value=d.volume||'';
+  document.getElementById('md-target').value=d.target_usd||'';
+  document.getElementById('cert-grs').checked=!!d.requires_grs;
+  document.getElementById('cert-cnas').checked=!!d.requires_cnas;
+  document.getElementById('cert-ce').checked=!!(d.extra_certs&&d.extra_certs.includes('CE'));
+  document.getElementById('cert-rohs').checked=!!(d.extra_certs&&d.extra_certs.includes('RoHS'));
+  document.getElementById('cert-qi2').checked=!!(d.extra_certs&&d.extra_certs.includes('Qi2'));
+  document.getElementById('cert-tuv').checked=!!(d.extra_certs&&d.extra_certs.includes('TÜV'));
+  document.getElementById('md-notes').value=d.notes||'';
+  document.getElementById('md-err').textContent='';
+  document.getElementById('mail-output').innerHTML='';
+  document.getElementById('mail-copy-btn').style.display='none';
+  document.getElementById('quotes-section').style.display='block';
+  renderQuotesTable(d.id);
+  renderActivityLog(d.id);
+  document.getElementById('modal-dossier').style.display='flex';
+}
+async function saveDossier() {
+  const product_id=document.getElementById('md-product').value;
+  const client_id=document.getElementById('md-client').value;
+  if(!product_id){document.getElementById('md-err').textContent='Selecteer een product';return;}
+  if(!client_id){document.getElementById('md-err').textContent='Selecteer een klant';return;}
+  const extraCerts=[];
+  if(document.getElementById('cert-ce').checked) extraCerts.push('CE');
+  if(document.getElementById('cert-rohs').checked) extraCerts.push('RoHS');
+  if(document.getElementById('cert-qi2').checked) extraCerts.push('Qi2');
+  if(document.getElementById('cert-tuv').checked) extraCerts.push('TÜV');
+  const payload={product_id,client_id,stage:document.getElementById('md-stage').value,priority:document.getElementById('md-prio').value,volume:parseInt(document.getElementById('md-vol').value)||null,target_usd:parseFloat(document.getElementById('md-target').value)||null,requires_grs:document.getElementById('cert-grs').checked,requires_cnas:document.getElementById('cert-cnas').checked,extra_certs:extraCerts.join(',')||null,notes:document.getElementById('md-notes').value.trim()||null,updated_at:new Date().toISOString()};
+  try {
+    if(editDosId) await db('PATCH','dossiers','?id=eq.'+editDosId,payload);
+    else await db('POST','dossiers','',payload);
+    closeModal('modal-dossier'); await loadAll();
+  } catch(e){document.getElementById('md-err').textContent=e.message;}
+}
+async function deleteDossier() {
+  if(!editDosId||!confirm('Dossier en alle quotes verwijderen?')) return;
+  try { await db('DELETE','dossiers','?id=eq.'+editDosId); closeModal('modal-dossier'); await loadAll(); }
+  catch(e){document.getElementById('md-err').textContent=e.message;}
+}
+
+// ===== QUOTES =====
+function renderQuotesTable(dosId) {
+  const dQuotes = quotes.filter(q=>q.dossier_id===dosId);
+  const dos = dossiers.find(d=>d.id===dosId);
+  const tbody = document.getElementById('quotes-tbody');
+  if(!dQuotes.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--faint);padding:16px">Nog geen quotes</td></tr>';return;}
+  tbody.innerHTML = dQuotes.map(q=>{
+    const isSelected = dos?.selected_supplier_quote_id===q.id;
+    const rowClass = isSelected?'quote-selected':q.status==='Afgewezen'?'quote-rejected':'';
+    const dotClass = isSelected?'dot-selected':q.status==='Afgewezen'?'dot-rejected':'dot-open';
+    return `<tr class="${rowClass}" onclick="openEditQuote(${escJ(q)})">
+      <td><span class="status-dot ${dotClass}"></span></td>
+      <td style="font-weight:500">${q.supplier}</td>
+      <td style="color:var(--muted)">${q.contact_name||'—'}</td>
+      <td>$${q.fob_usd?parseFloat(q.fob_usd).toFixed(3):'—'}</td>
+      <td>${q.moq?parseInt(q.moq).toLocaleString():'—'}</td>
+      <td>${q.lead_time_days?q.lead_time_days+'d':'—'}</td>
+      <td>${q.calc_inkoop_eur?'€'+parseFloat(q.calc_inkoop_eur).toFixed(3):'—'}</td>
+      <td>${q.calc_within_target===true?'<span class="tag tag-green">✓ Ja</span>':q.calc_within_target===false?'<span class="tag tag-red">✗ Nee</span>':'—'}</td>
+      <td>${!isSelected&&q.status!=='Afgewezen'?`<button class="btn btn-sm" onclick="event.stopPropagation();selectQuote('${dosId}','${q.id}')">Selecteer</button>`:''}
+          ${isSelected?'<span class="tag tag-green">✓ Geselecteerd</span>':''}
+          ${q.status==='Afgewezen'?'<span class="tag tag-red">Afgewezen</span>':''}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function selectQuote(dosId, quoteId) {
+  // mark all other quotes as rejected, selected as selected
+  const dQuotes = quotes.filter(q=>q.dossier_id===dosId);
+  try {
+    await db('PATCH','dossiers','?id=eq.'+dosId,{selected_supplier_quote_id:quoteId,updated_at:new Date().toISOString()});
+    for(const q of dQuotes) {
+      await db('PATCH','quotes','?id=eq.'+q.id,{status: q.id===quoteId?'Geselecteerd':'Afgewezen'});
+    }
+    await loadAll();
+    renderQuotesTable(dosId);
+  } catch(e){alert('Fout: '+e.message);}
+}
+
+function openAddQuote() {
+  editQuoteId=null;
+  document.getElementById('mq-title').textContent='Quote toevoegen';
+  document.getElementById('mq-del').style.display='none';
+  ['mq-fob','mq-moq','mq-lead','mq-file','mq-notes'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('mq-supplier').value='';
+  document.getElementById('mq-contact').value='';
+  document.getElementById('calc-result').innerHTML='';
+  document.getElementById('mq-err').textContent='';
+  document.getElementById('modal-quote').style.display='flex';
+}
+function openEditQuote(q) {
+  editQuoteId=q.id;
+  document.getElementById('mq-title').textContent='Quote bewerken';
+  document.getElementById('mq-del').style.display='inline-flex';
+  document.getElementById('mq-supplier').value=q.supplier||'';
+  document.getElementById('mq-contact').value=q.contact_name||'';
+  document.getElementById('mq-fob').value=q.fob_usd||'';
+  document.getElementById('mq-moq').value=q.moq||'';
+  document.getElementById('mq-lead').value=q.lead_time_days||'';
+  document.getElementById('mq-file').value=q.file_name||'';
+  document.getElementById('mq-notes').value=q.notes||'';
+  document.getElementById('mq-err').textContent='';
+  calcQuote();
+  document.getElementById('modal-quote').style.display='flex';
+}
+
+function calcQuote() {
+  const fob = parseFloat(document.getElementById('mq-fob').value);
+  if(!fob||!currentDossierId) { document.getElementById('calc-result').innerHTML=''; return; }
+  const dos = dossiers.find(d=>d.id===currentDossierId);
+  const vol = dos?.volume || 200000;
+  // Calculatie SHI standaard
+  const SGL = 0.035;
+  const INFLATIE = 0.01;
+  const STIBAT = 0.03439;
+  const FRA1_CONTAINER = 3500;
+  const FRA2 = 1000;
+  const UNITS_PER_40HQ = 10000; // schatting
+  const SHI_MARGE = 0.12;
+  const ACTION_MARGE = 0.40;
+  // Wisselkoers (hardcoded – toon hint)
+  const EUR_USD = 1.08;
+  const fobEur = fob / EUR_USD;
+  const sgl = fobEur * SGL;
+  const inflatie = fobEur * INFLATIE;
+  const fra1 = FRA1_CONTAINER / UNITS_PER_40HQ;
+  const fra2 = FRA2 / vol;
+  const inkoopExMarge = fobEur + sgl + inflatie + fra1 + fra2 + STIBAT;
+  const inkoopIncMarge = inkoopExMarge / (1 - SHI_MARGE);
+  const actionVP = inkoopIncMarge / (1 - ACTION_MARGE);
+  const target = dos?.target_usd ? dos.target_usd / EUR_USD : null;
+  const withinTarget = target ? fobEur <= target : null;
+  // Save to quote fields for DB
+  window._calcResult = { inkoop: inkoopIncMarge, vp: actionVP, within: withinTarget };
+  document.getElementById('calc-result').innerHTML = `
+    <div class="calc-box">
+      <div class="calc-row"><span>FOB EUR</span><span>€${fobEur.toFixed(3)}</span></div>
+      <div class="calc-row"><span>+ SGL (3,5%)</span><span>€${sgl.toFixed(3)}</span></div>
+      <div class="calc-row"><span>+ Inflatie (1%)</span><span>€${inflatie.toFixed(3)}</span></div>
+      <div class="calc-row"><span>+ FRA1 (container)</span><span>€${fra1.toFixed(3)}</span></div>
+      <div class="calc-row"><span>+ FRA2 + STIBAT</span><span>€${(fra2+STIBAT).toFixed(3)}</span></div>
+      <div class="calc-row total"><span>Inkoop SHI</span><span>€${inkoopIncMarge.toFixed(3)}</span></div>
+      <div class="calc-row"><span>Action VP (indicatief)</span><span>€${actionVP.toFixed(2)}</span></div>
+      ${target!==null?`<div class="calc-row"><span>Binnen target?</span><span class="${withinTarget?'calc-ok':'calc-warn'}">${withinTarget?'✓ Ja':'✗ Nee — $'+((fob-dos.target_usd)>0?'+':'')+((fob-dos.target_usd).toFixed(3))+' boven target'}</span></div>`:''}
+      <div style="font-size:10px;color:var(--faint);margin-top:6px">Koers EUR/USD: ${EUR_USD} — haal dagkoers op voor definitieve calc</div>
     </div>`;
 }
 
-function openAdd() {
-  editingId = null;
-  document.getElementById('modal-title').textContent = 'Nieuw sourcing item';
-  document.getElementById('btn-delete').style.display = 'none';
-  ['f-name','f-target','f-volume','f-notes'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('f-supplier').value = '';
-  document.getElementById('f-stage').value = 'Oriëntatie';
-  document.getElementById('f-prio').value = 'Normaal';
-  document.getElementById('modal-err').textContent = '';
-  document.getElementById('modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('f-name').focus(), 50);
-}
-
-function openEdit(item) {
-  editingId = item.id;
-  document.getElementById('modal-title').textContent = 'Item bewerken';
-  document.getElementById('btn-delete').style.display = 'inline-flex';
-  document.getElementById('f-name').value = item.name || '';
-  document.getElementById('f-supplier').value = item.supplier || '';
-  document.getElementById('f-stage').value = item.stage || 'Oriëntatie';
-  document.getElementById('f-prio').value = item.priority || 'Normaal';
-  document.getElementById('f-target').value = item.target_usd || '';
-  document.getElementById('f-volume').value = item.volume || '';
-  document.getElementById('f-notes').value = item.notes || '';
-  document.getElementById('modal-err').textContent = '';
-  document.getElementById('modal').style.display = 'flex';
-}
-
-async function saveItem() {
-  const name = document.getElementById('f-name').value.trim();
-  if (!name) { document.getElementById('modal-err').textContent = 'Productnaam is verplicht'; return; }
-  const payload = {
-    name,
-    supplier: document.getElementById('f-supplier').value || null,
-    stage: document.getElementById('f-stage').value,
-    priority: document.getElementById('f-prio').value,
-    target_usd: parseFloat(document.getElementById('f-target').value) || null,
-    volume: parseInt(document.getElementById('f-volume').value) || null,
-    notes: document.getElementById('f-notes').value.trim() || null,
-    updated_at: new Date().toISOString()
-  };
-  document.getElementById('modal-err').textContent = '';
+async function saveQuote() {
+  const supplier=document.getElementById('mq-supplier').value;
+  if(!supplier){document.getElementById('mq-err').textContent='Selecteer een leverancier';return;}
+  if(!currentDossierId){document.getElementById('mq-err').textContent='Geen dossier actief';return;}
+  const calc = window._calcResult||{};
+  const payload={dossier_id:currentDossierId,supplier,contact_name:document.getElementById('mq-contact').value.trim()||null,fob_usd:parseFloat(document.getElementById('mq-fob').value)||null,moq:parseInt(document.getElementById('mq-moq').value)||null,lead_time_days:parseInt(document.getElementById('mq-lead').value)||null,file_name:document.getElementById('mq-file').value.trim()||null,notes:document.getElementById('mq-notes').value.trim()||null,calc_inkoop_eur:calc.inkoop||null,calc_action_vp:calc.vp||null,calc_within_target:calc.within??null,status:'Ontvangen'};
   try {
-    if (editingId) {
-      await api('PATCH', TABLE + '?id=eq.' + editingId, payload);
-    } else {
-      await api('POST', TABLE, payload);
-    }
-    closeModal();
-    await loadData();
-  } catch(e) {
-    document.getElementById('modal-err').textContent = 'Fout: ' + e.message;
+    if(editQuoteId) await db('PATCH','quotes','?id=eq.'+editQuoteId,payload);
+    else await db('POST','quotes','',payload);
+    closeModal('modal-quote');
+    quotes = await db('GET','quotes','?order=created_at.desc');
+    renderQuotesTable(currentDossierId);
+  } catch(e){document.getElementById('mq-err').textContent=e.message;}
+}
+async function deleteQuote() {
+  if(!editQuoteId||!confirm('Quote verwijderen?')) return;
+  try { await db('DELETE','quotes','?id=eq.'+editQuoteId); closeModal('modal-quote'); quotes=await db('GET','quotes','?order=created_at.desc'); renderQuotesTable(currentDossierId); }
+  catch(e){document.getElementById('mq-err').textContent=e.message;}
+}
+
+// ===== ACTIVITY LOG =====
+async function renderActivityLog(dosId) {
+  try {
+    const logItems = await db('GET','activity_log','?dossier_id=eq.'+dosId+'&order=created_at.desc');
+    const el=document.getElementById('activity-log');
+    if(!logItems.length){el.innerHTML='<div style="color:var(--faint);font-size:12px">Nog geen activiteit</div>';return;}
+    el.innerHTML=logItems.map(l=>`<div class="log-item"><div class="log-dot"></div><div><div class="log-action">${l.action}</div>${l.detail?`<div class="log-detail">${l.detail}</div>`:''}
+    <div class="log-time">${new Date(l.created_at).toLocaleDateString('nl-NL',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('');
+  } catch(e){}
+}
+
+// ===== MAIL GENERATOR =====
+async function generateMail() {
+  const supplierRaw=document.getElementById('mail-supplier').value;
+  const mailType=document.getElementById('mail-type').value;
+  if(!supplierRaw){alert('Selecteer een leverancier voor de mail');return;}
+  if(!currentDossierId){alert('Sla het dossier eerst op');return;}
+  const dos=dossiers.find(d=>d.id===currentDossierId);
+  const prod=dos?products.find(p=>p.id===dos.product_id):null;
+  const client=dos?clients.find(c=>c.id===dos.client_id):null;
+  const certs=[];
+  if(dos?.requires_grs) certs.push('GRS');
+  if(dos?.requires_cnas) certs.push('CNAS lab certificaat');
+  if(dos?.extra_certs) certs.push(...dos.extra_certs.split(',').filter(Boolean));
+  const mailOut=document.getElementById('mail-output');
+  mailOut.innerHTML='<div class="ai-loading"><div class="spinner"></div> Mail genereren...</div>';
+  document.getElementById('mail-copy-btn').style.display='none';
+  const contactMap={'Comp (Jane Song)':'Hi Jane,','Alecter (Benny Lau)':'Hi Benny,','Kingsun (Lydia)':'Hi Lydia,','Marvo (Katherine)':'Hi Katherine,','Zhounghenghua (Lara)':'Hi Lara,'};
+  const greeting=contactMap[supplierRaw]||'Hi,';
+  try {
+    const res=await fetch(AI,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`Schrijf een professionele inkoop e-mail in het Engels van Michelle Raijmakers (Buyer bij SHI B.V.) naar een leverancier.
+
+Type mail: ${mailType}
+Aanhef: ${greeting}
+Product: ${prod?.name||'(onbekend)'}
+Specs: ${prod?.specs||'zie attachment'}
+Klant: ${client?.name||'retail klant'}
+Volume: ${dos?.volume?dos.volume.toLocaleString()+' units':'200,000 units (indicatief)'}
+Target FOB prijs: ${dos?.target_usd?'USD '+dos.target_usd:'nader te bepalen'}
+Vereiste certificeringen: ${certs.length?certs.join(', '):'CE, RoHS'}
+
+Stijl: kort, informeel maar professioneel, direct to the point. Geen overbodige tekst. Sluiten met deze handtekening exact:
+
+With kind regards,
+Michelle Raijmakers
+Buyer
+Absent on Friday.
+A: Laagveld 10, 5721 VV Asten, The Netherlands
+T: +31 493 680 966 | M: +31 6 13 871 687
+E: michelle.raijmakers@shi.nl | W: www.shi.nl
+
+Geef ALLEEN de mail tekst terug, geen uitleg.`}]})});
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'Kon geen mail genereren';
+    mailOut.innerHTML=`<div class="ai-mail">${text}</div>`;
+    window._generatedMail=text;
+    document.getElementById('mail-copy-btn').style.display='block';
+  } catch(e){mailOut.innerHTML=`<div style="color:var(--danger);font-size:12px">Fout: ${e.message}</div>`;}
+}
+
+function copyMail() {
+  if(window._generatedMail) {
+    navigator.clipboard.writeText(window._generatedMail).then(()=>{
+      const btn=document.querySelector('#mail-copy-btn button');
+      btn.textContent='✓ Gekopieerd!';
+      setTimeout(()=>btn.textContent='Kopieer mail',2000);
+    });
   }
 }
 
-async function deleteItem() {
-  if (!editingId) return;
-  if (!confirm('Item verwijderen?')) return;
+// ===== CLIENT MODAL =====
+function openNewClient() {
+  editClientId=null;
+  document.getElementById('mc-title').textContent='Nieuwe klant';
+  document.getElementById('mc-del').style.display='none';
+  ['mc-name','mc-notes'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('mc-grs').checked=false;
+  document.getElementById('mc-cnas').checked=false;
+  document.getElementById('mc-err').textContent='';
+  document.getElementById('modal-client').style.display='flex';
+}
+function openEditClient(c) {
+  editClientId=c.id;
+  document.getElementById('mc-title').textContent='Klant bewerken';
+  document.getElementById('mc-del').style.display='inline-flex';
+  document.getElementById('mc-name').value=c.name||'';
+  document.getElementById('mc-grs').checked=!!c.requires_grs;
+  document.getElementById('mc-cnas').checked=!!c.requires_cnas;
+  document.getElementById('mc-notes').value=c.notes||'';
+  document.getElementById('mc-err').textContent='';
+  document.getElementById('modal-client').style.display='flex';
+}
+async function saveClient() {
+  const name=document.getElementById('mc-name').value.trim();
+  if(!name){document.getElementById('mc-err').textContent='Naam is verplicht';return;}
+  const payload={name,requires_grs:document.getElementById('mc-grs').checked,requires_cnas:document.getElementById('mc-cnas').checked,notes:document.getElementById('mc-notes').value.trim()||null};
   try {
-    await api('DELETE', TABLE + '?id=eq.' + editingId);
-    closeModal();
-    await loadData();
-  } catch(e) {
-    document.getElementById('modal-err').textContent = 'Fout: ' + e.message;
-  }
+    if(editClientId) await db('PATCH','clients','?id=eq.'+editClientId,payload);
+    else await db('POST','clients','',payload);
+    closeModal('modal-client'); await loadAll();
+  } catch(e){document.getElementById('mc-err').textContent=e.message;}
+}
+async function deleteClient() {
+  if(!editClientId||!confirm('Klant verwijderen?')) return;
+  try { await db('DELETE','clients','?id=eq.'+editClientId); closeModal('modal-client'); await loadAll(); }
+  catch(e){document.getElementById('mc-err').textContent=e.message;}
 }
 
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function bgClose(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+// ===== SETUP MSG =====
+function showSetup() {
+  document.getElementById('pipeline-content').innerHTML=`<div style="margin:24px;background:var(--amber-bg);border:1px solid #f0d070;border-radius:var(--r-lg);padding:20px 24px">
+    <h3 style="color:var(--amber);margin-bottom:8px">Eenmalige setup vereist</h3>
+    <p style="font-size:13px;color:#6b4f10;margin-bottom:12px">Ga naar <strong>Supabase → SQL Editor</strong> en voer het schema.sql bestand uit dat je hebt gedownload.</p>
+    <button class="btn btn-primary" onclick="loadAll()">↺ Vernieuwen</button>
+  </div>`;
+}
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['modal-product','modal-dossier','modal-quote','modal-client'].forEach(closeModal);}});
 
-loadData();
+loadAll();
 </script>
 </body>
 </html>
