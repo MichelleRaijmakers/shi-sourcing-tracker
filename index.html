@@ -1031,8 +1031,7 @@ async function generateMail() {
     if(d.requires_cnas) certs.push('CNAS lab certificate');
     if(d.extra_certs) certs.push(...d.extra_certs.split(',').filter(Boolean));
     return `Program ${i+1} — ${client?.name||'Retail'}: ${d.volume?parseInt(d.volume).toLocaleString()+' units':''} ${d.target_usd?'· target USD '+d.target_usd:''} · Certs: ${certs.join(', ')||'CE, RoHS'}`;
-  }).join('
-');
+  }).join('\n');
 
   const mailOut=document.getElementById('mail-output');
   mailOut.innerHTML='<div class="ai-loading"><div class="spinner"></div> Mail genereren...</div>';
