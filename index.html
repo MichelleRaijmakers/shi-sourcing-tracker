@@ -1386,8 +1386,7 @@ async function readPdfAsText(file) {
         const decoder = new TextDecoder('latin1');
         const raw = decoder.decode(arr);
         // Extract readable text
-        const text = raw.replace(/[^ -~
-]/g,' ').replace(/\s+/g,' ').substring(0,4000);
+        const text = raw.replace(/[^\x20-\x7E]/g,' ').replace(/[ \t]+/g,' ').substring(0,4000);
         res(text);
       } catch(err){rej(err);}
     };
